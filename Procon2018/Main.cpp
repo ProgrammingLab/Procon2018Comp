@@ -1,22 +1,15 @@
 ﻿
-# include <Siv3D.hpp> // OpenSiv3D v0.2.4
+#include "FieldView.h"
 
 void Main()
 {
-	Graphics::SetBackground(ColorF(0.8, 0.9, 1.0));
+	using namespace Procon2018;
 
-	const Font font(50);
+	s3d::Graphics2D::SetSamplerState(s3d::SamplerState::ClampLinear);
 
-	const Texture textureCat(Emoji(U"🐈"), TextureDesc::Mipped);
+	FieldView fv(s3d::Window::ClientRect());
 
-	while (System::Update())
-	{
-		font(U"Hello, Siv3D!🐣").drawAt(Window::Center(), Palette::Black);
-
-		font(Cursor::Pos()).draw(20, 400, ColorF(0.6));
-
-		textureCat.resized(80).draw(540, 380);
-
-		Circle(Cursor::Pos(), 60).draw(ColorF(1, 0, 0, 0.5));
+	while (s3d::System::Update()) {
+		fv.update();
 	}
 }

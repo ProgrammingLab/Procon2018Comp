@@ -48,13 +48,23 @@ public:
 
 protected:
 
-	int maxTurn, turn, w, h;
+	int m_maxTurn, m_turn, m_w, m_h;
 
-	Grid field[MAX_H][MAX_W];
+	Grid m_field[MAX_H][MAX_W];
 
-	s3d::Point player[4];
+	s3d::Point m_player[4];
 
 public:
+
+	Field();
+
+	int maxTurn() const;
+
+	int turn() const;
+
+	int w() const;
+	
+	int h() const;
 
 	const Grid& grid(const s3d::Point &pos) const;
 

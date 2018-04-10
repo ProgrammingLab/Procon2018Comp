@@ -54,6 +54,9 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FieldView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -193,6 +196,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FieldView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
