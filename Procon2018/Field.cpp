@@ -6,6 +6,11 @@ using namespace s3d;
 namespace Procon2018 {
 
 
+s3d::Point Field::nextPos(const Action &a) const {
+	if (a.type != ActionType::Move) return m_player[a.playerId];
+	return m_player[a.playerId] + Neighbour8(a.dir);
+}
+
 Field::Field()
 : m_maxTurn()
 , m_turn()
@@ -56,14 +61,32 @@ std::pair<int, int> Field::calcScore() const {
 	return std::pair<int, int>(0, 0);
 }
 
-bool Field::forward(const std::optional<Action>& a0, const std::optional<Action>& a1, const std::optional<Action>& b0, const std::optional<Action>& b1) {
-	// TODO:
-	return false;
+bool Field::forward(const std::optional<const Action>& a0,
+					const std::optional<const Action>& a1,
+					const std::optional<const Action>& b0,
+					const std::optional<const Action>& b1) {
+	if (!isForwardable(a0, a1, b0, b1)) return false;
+	// TODO: 色々
+	// 塗り絵処理は最後にやること
+	return true;
 }
 
-bool Field::forwardable(const std::optional<Action>& a0, const std::optional<Action>& a1, const std::optional<Action>& b0, const std::optional<Action>& b1) const {
-	// TODO:
-	return false;
+bool Field::isForwardable(const std::optional<const Action>& a0,
+						const std::optional<const Action>& a1,
+						const std::optional<const Action>& b0,
+						const std::optional<const Action>& b1) const {
+	// TODO: 個々の行動の有効性の判定(敵タイルの存在しない場所を除去指定など)
+	// TODO: 同じマスを除去していして無効になるやつ
+	if (m_turn >= m_maxTurn) return false;
+	const std::optional<const Action>* v[4] = {&a0, &a1, &b0, &b1 };
+	s3d::Point ps[4];
+	for (int i = 0; i < 4; i++) {
+		const std::optional<const Action> a = *v[i];
+		ps[i] = a ? nextPos(a.value()) : m_player[i];
+		for (int j = 0; j < i; j++) {
+			if (ps[j] == ps[i]) return false; //行き先が被った
+		}
+	}
 }
 
 

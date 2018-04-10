@@ -54,6 +54,9 @@ protected:
 
 	s3d::Point m_player[4];
 
+
+	s3d::Point nextPos(const Action &a) const;
+
 public:
 
 	Field();
@@ -77,15 +80,15 @@ public:
 	std::pair<int, int> calcScore() const;
 	// 命令を実行し, ターンを進める
 	// 命令が実行できない場合はfalseを返す
-	bool forward(const std::optional<Action> &a0,
-				 const std::optional<Action> &a1,
-				 const std::optional<Action> &b0,
-				 const std::optional<Action> &b1);
+	bool forward(const std::optional<const Action> &a0,
+				 const std::optional<const Action> &a1,
+				 const std::optional<const Action> &b0,
+				 const std::optional<const Action> &b1);
 
-	bool forwardable(const std::optional<Action> &a0,
-					 const std::optional<Action> &a1,
-					 const std::optional<Action> &b0,
-					 const std::optional<Action> &b1) const;
+	bool isForwardable(const std::optional<const Action> &a0,
+					 const std::optional<const Action> &a1,
+					 const std::optional<const Action> &b0,
+					 const std::optional<const Action> &b1) const;
 };
 
 
