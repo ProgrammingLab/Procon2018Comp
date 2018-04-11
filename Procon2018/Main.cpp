@@ -1,5 +1,4 @@
-﻿
-#include "FieldView.h"
+﻿#include "FieldView.h"
 
 void Main()
 {

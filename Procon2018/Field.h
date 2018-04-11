@@ -34,8 +34,6 @@ struct Grid {
 struct Action {
 
 	ActionType type;
-	
-	PlayerId playerId;
 
 	Direction8 dir;
 };
@@ -53,9 +51,6 @@ protected:
 	Grid m_field[MAX_H][MAX_W];
 
 	s3d::Point m_player[4];
-
-
-	s3d::Point nextPos(const Action &a) const;
 
 public:
 

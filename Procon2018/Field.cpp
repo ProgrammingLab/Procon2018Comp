@@ -1,15 +1,11 @@
 #include "Field.h"
+#include "stdafx.h"
 
 using namespace s3d;
 
 
 namespace Procon2018 {
 
-
-s3d::Point Field::nextPos(const Action &a) const {
-	if (a.type != ActionType::Move) return m_player[a.playerId];
-	return m_player[a.playerId] + Neighbour8(a.dir);
-}
 
 Field::Field()
 : m_maxTurn()
@@ -66,27 +62,69 @@ bool Field::forward(const std::optional<const Action>& a0,
 					const std::optional<const Action>& b0,
 					const std::optional<const Action>& b1) {
 	if (!isForwardable(a0, a1, b0, b1)) return false;
-	// TODO: 色々
-	// 塗り絵処理は最後にやること
+	const std::optional<const Action>* v[4] = {&a0, &a1, &b0, &b1 };
+	for (int i = 0; i < 4; i++) {
+		if (!*v[i]) continue;
+		const Action &a = v[i]->value();
+		s3d::Point p = m_player[i] + Neighbour8(a.dir);
+		if (a.type == ActionType::Move) {
+			m_player[i] = p;
+		}
+		else if (a.type == ActionType::Remove) {
+			m_field[p.y][p.x].color.reset();
+		}
+		else throw ("エッ");
+	}
+	
+	// 塗り絵処理
+	for (int i = 0; i < 4; i++) {
+		m_field[m_player[i].y][m_player[i].x].color = teamOf((PlayerId)i);
+	}
+
+	m_turn++;
 	return true;
 }
 
 bool Field::isForwardable(const std::optional<const Action>& a0,
-						const std::optional<const Action>& a1,
-						const std::optional<const Action>& b0,
-						const std::optional<const Action>& b1) const {
-	// TODO: 個々の行動の有効性の判定(敵タイルの存在しない場所を除去指定など)
-	// TODO: 同じマスを除去していして無効になるやつ
+						  const std::optional<const Action>& a1,
+						  const std::optional<const Action>& b0,
+						  const std::optional<const Action>& b1) const {
+	auto validMove = [&](PlayerId playerId, const Action &a) {
+		s3d::Point next = m_player[playerId] + Neighbour8(a.dir);
+		if (auto &c = m_field[next.y][next.x].color)
+			if (c.value() != teamOf(playerId)) return false;
+		return true;
+	};
+	auto validRemove = [&](PlayerId playerId, const Action &a) {
+		return !validMove(playerId, a);
+	};
+	auto validAction = [&](PlayerId playerId, const Action &a) {
+		if (a.type == ActionType::Move) return validMove(playerId, a);
+		return validRemove(playerId, a);
+	};
 	if (m_turn >= m_maxTurn) return false;
 	const std::optional<const Action>* v[4] = {&a0, &a1, &b0, &b1 };
-	s3d::Point ps[4];
+	s3d::Point pos[4];
+	std::optional<s3d::Point> target[4];
 	for (int i = 0; i < 4; i++) {
-		const std::optional<const Action> a = *v[i];
-		ps[i] = a ? nextPos(a.value()) : m_player[i];
+		pos[i] = m_player[i];
+		if (!*v[i]) continue; // 停留
+		const Action &a = v[i]->value();
+		if (!validAction((PlayerId)i, a)) return false; // 単体で無効な行動
+		pos[i] = m_player[i] + Neighbour8(a.dir);
+		if (a.type == ActionType::Remove)
+			target[i] = m_player[i] + Neighbour8(a.dir);
+	}
+
+	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < i; j++) {
-			if (ps[j] == ps[i]) return false; //行き先が被った
+			if (pos[j] == pos[i]) return false; // 行き先が被った
+			if ((target[i] && target[j]) && target[j].value() == target[i].value())
+				return false; // 除去先が被った
 		}
 	}
+
+	return true;
 }
 
 
