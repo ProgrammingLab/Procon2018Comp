@@ -73,17 +73,21 @@ public:
 	bool outOfField(const s3d::Point &pos) const;
 
 	std::pair<int, int> calcScore() const;
+
+	bool checkValid(PlayerId playerId, const Action &a) const;
+
 	// 命令を実行し, ターンを進める
-	// 命令が実行できない場合はfalseを返す
+	// 規定ターン超過の場合はfalseを返す
 	bool forward(const std::optional<const Action> &a0,
 				 const std::optional<const Action> &a1,
 				 const std::optional<const Action> &b0,
 				 const std::optional<const Action> &b1);
 
-	bool isForwardable(const std::optional<const Action> &a0,
-					 const std::optional<const Action> &a1,
-					 const std::optional<const Action> &b0,
-					 const std::optional<const Action> &b1) const;
+	// 不正な命令が一つでもあればfalse
+	bool checkAllValid(const std::optional<const Action> &a0,
+					   const std::optional<const Action> &a1,
+					   const std::optional<const Action> &b0,
+					   const std::optional<const Action> &b1) const;
 };
 
 

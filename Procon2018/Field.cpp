@@ -8,8 +8,8 @@ namespace Procon2018 {
 
 
 Field::Field()
-: m_maxTurn()
-, m_turn()
+: m_maxTurn(10000000)
+, m_turn(0)
 , m_w(12)
 , m_h(12)
 , m_field()
@@ -57,52 +57,30 @@ std::pair<int, int> Field::calcScore() const {
 	return std::pair<int, int>(0, 0);
 }
 
+bool Field::checkValid(PlayerId playerId, const Action & a) const {
+	if (a.type == ActionType::Move) {
+		s3d::Point next = m_player[playerId] + Neighbour8(a.dir);
+		if (outOfField(next)) return false;
+		if (auto &c = m_field[next.y][next.x].color)
+			if (c.value() != teamOf(playerId)) return false;
+		return true;
+	}
+	if (a.type == ActionType::Remove) {
+		s3d::Point target = m_player[playerId] + Neighbour8(a.dir);
+		if (outOfField(target)) return false;
+		if (auto &c = m_field[target.y][target.x].color)
+			if (c.value() != teamOf(playerId)) return true;
+		return false;
+	}
+	throw "エッ";
+}
+
 bool Field::forward(const std::optional<const Action>& a0,
 					const std::optional<const Action>& a1,
 					const std::optional<const Action>& b0,
 					const std::optional<const Action>& b1) {
-	if (!isForwardable(a0, a1, b0, b1)) return false;
-	const std::optional<const Action>* v[4] = {&a0, &a1, &b0, &b1 };
-	for (int i = 0; i < 4; i++) {
-		if (!*v[i]) continue;
-		const Action &a = v[i]->value();
-		s3d::Point p = m_player[i] + Neighbour8(a.dir);
-		if (a.type == ActionType::Move) {
-			m_player[i] = p;
-		}
-		else if (a.type == ActionType::Remove) {
-			m_field[p.y][p.x].color.reset();
-		}
-		else throw ("エッ");
-	}
-	
-	// 塗り絵処理
-	for (int i = 0; i < 4; i++) {
-		m_field[m_player[i].y][m_player[i].x].color = teamOf((PlayerId)i);
-	}
-
-	m_turn++;
-	return true;
-}
-
-bool Field::isForwardable(const std::optional<const Action>& a0,
-						  const std::optional<const Action>& a1,
-						  const std::optional<const Action>& b0,
-						  const std::optional<const Action>& b1) const {
-	auto validMove = [&](PlayerId playerId, const Action &a) {
-		s3d::Point next = m_player[playerId] + Neighbour8(a.dir);
-		if (auto &c = m_field[next.y][next.x].color)
-			if (c.value() != teamOf(playerId)) return false;
-		return true;
-	};
-	auto validRemove = [&](PlayerId playerId, const Action &a) {
-		return !validMove(playerId, a);
-	};
-	auto validAction = [&](PlayerId playerId, const Action &a) {
-		if (a.type == ActionType::Move) return validMove(playerId, a);
-		return validRemove(playerId, a);
-	};
 	if (m_turn >= m_maxTurn) return false;
+
 	const std::optional<const Action>* v[4] = {&a0, &a1, &b0, &b1 };
 	s3d::Point pos[4];
 	std::optional<s3d::Point> target[4];
@@ -110,20 +88,56 @@ bool Field::isForwardable(const std::optional<const Action>& a0,
 		pos[i] = m_player[i];
 		if (!*v[i]) continue; // 停留
 		const Action &a = v[i]->value();
-		if (!validAction((PlayerId)i, a)) return false; // 単体で無効な行動
-		pos[i] = m_player[i] + Neighbour8(a.dir);
-		if (a.type == ActionType::Remove)
-			target[i] = m_player[i] + Neighbour8(a.dir);
+		if (!checkValid((PlayerId)i, a)) continue; // 不正
+		s3d::Point p = m_player[i] + Neighbour8(a.dir);
+		if (a.type == ActionType::Move)
+			pos[i] = p;
+		else if (a.type == ActionType::Remove) {
+			target[i] = p;
+		}
+		else throw ("エッ");
 	}
 
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < i; j++) {
-			if (pos[j] == pos[i]) return false; // 行き先が被った
-			if ((target[i] && target[j]) && target[j].value() == target[i].value())
-				return false; // 除去先が被った
+			// 行き先が被ったので無効
+			if (pos[j] == pos[i]) {
+				pos[i] = m_player[i];
+				pos[j] = m_player[j];
+			}
+			// 除去先が被ったので無効
+			if ((target[i] && target[j]) && target[j].value() == target[i].value()) {
+				target[i].reset();
+				target[j].reset();
+			}
 		}
 	}
 
+	// 除去処理
+	for (int i = 0; i < 4; i++) {
+		if (!target[i]) continue;
+		m_field[target[i].value().y][target[i].value().x].color.reset();
+	}
+	
+	// 塗り絵処理
+	for (int i = 0; i < 4; i++) {
+		m_player[i] = pos[i];
+		m_field[pos[i].y][pos[i].x].color = teamOf((PlayerId)i);
+	}
+
+	m_turn++;
+	return true;
+}
+
+bool Field::checkAllValid(const std::optional<const Action>& a0,
+						  const std::optional<const Action>& a1,
+						  const std::optional<const Action>& b0,
+						  const std::optional<const Action>& b1) const {
+	const std::optional<const Action>* v[4] = {&a0, &a1, &b0, &b1 };
+	for (int i = 0; i < 4; i++) {
+		if (!*v[i]) continue;
+		if (checkValid((PlayerId)i, v[i]->value())) return false;
+	}
 	return true;
 }
 

@@ -1,4 +1,4 @@
-﻿#include "FieldView.h"
+﻿#include "Visualizer.h"
 
 void Main()
 {
@@ -6,9 +6,9 @@ void Main()
 
 	s3d::Graphics2D::SetSamplerState(s3d::SamplerState::ClampLinear);
 
-	FieldView fv(s3d::Window::ClientRect());
+	Visualizer visualizer;
 
 	while (s3d::System::Update()) {
-		fv.update();
+		visualizer.update();
 	}
 }
