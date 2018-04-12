@@ -38,7 +38,7 @@ void FieldView::update() {
 	for (int yi = 0; yi < m_fld.h(); yi++) {
 		for (int xi = 0; xi < m_fld.w(); xi++) {
 			const Grid& grid = m_fld.grid({xi, yi});
-			s3d::Vec2 p(xi*m_gridSize, yi*m_gridSize);
+			s3d::Vec2 p = m_v.tl() + s3d::Vec2(xi*m_gridSize, yi*m_gridSize);
 			s3d::Vec2 c(m_gridSize/2, m_gridSize/2);
 			s3d::Color color = gridColor({xi, yi});
 			s3d::Color oldColor = m_oldColor[yi][xi];
@@ -55,11 +55,11 @@ void FieldView::update() {
 		s3d::Point oldPos = m_oldPlayerPos[i];
 		TeamId team = m_fld.teamOf((PlayerId)i);
 		s3d::Color color = team ? s3d::Palette::Red : s3d::Palette::Blue;
-		s3d::Vec2 end(
+		s3d::Vec2 end = m_v.tl() + s3d::Vec2(
 			currentPos.x*m_gridSize + m_gridSize/2,
 			currentPos.y*m_gridSize + m_gridSize/2
 		);
-		s3d::Vec2 start(
+		s3d::Vec2 start = m_v.tl() + s3d::Vec2(
 			oldPos.x*m_gridSize + m_gridSize/2,
 			oldPos.y*m_gridSize + m_gridSize/2
 		);
