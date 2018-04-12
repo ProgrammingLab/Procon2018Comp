@@ -15,7 +15,7 @@ Field::Field()
 , m_field()
 , m_player{ {1, 1}, {11, 11}, {11, 1}, {1, 11} } {
 	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
-		m_field[y][x].score = s3d::Random(-16, 10);
+		m_field[y][x].score = s3d::Random(-16, 16);
 		if (s3d::Random(1)) m_field[y][x].color = std::make_optional((TeamId)s3d::Random(1));
 	}
 }
