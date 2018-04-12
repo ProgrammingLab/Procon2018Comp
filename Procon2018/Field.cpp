@@ -15,7 +15,7 @@ Field::Field()
 , m_field()
 , m_player{ {1, 1}, {11, 11}, {11, 1}, {1, 11} } {
 	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
-		m_field[y][x].score = s3d::Random(-16, 16);
+		m_field[y][x].score = s3d::Random(-16, 10);
 		if (s3d::Random(1)) m_field[y][x].color = std::make_optional((TeamId)s3d::Random(1));
 	}
 }
@@ -53,8 +53,51 @@ bool Field::outOfField(const Point &pos) const {
 }
 
 std::pair<int, int> Field::calcScore() const {
-	// TODO:
-	return std::pair<int, int>(0, 0);
+	std::pair<int, int> ret(0, 0);
+	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
+		const auto &c = m_field[y][x].color;
+		if (!c) continue;
+		if (c.value() == TeamId::A) ret.first += m_field[y][x].score;
+		else if (c.value() == TeamId::B) ret.second += m_field[y][x].score;
+		else throw "ƒGƒb";
+	}
+
+	auto specialScore = [&](TeamId teamId) {
+		constexpr s3d::Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
+		const int O = 1;
+		bool used[Field::MAX_H + 2][Field::MAX_W + 2] = {};
+		
+		std::queue<s3d::Point> q;
+		q.push({-1, -1});
+		while (!q.empty()) {
+			const s3d::Point f = q.front(); q.pop();
+			if (used[f.y + O][f.x + O]) continue;
+			used[f.y + O][f.x + O] = true;
+			for (int i = 0; i < 4; i++) {
+				const s3d::Point n = f + dirPoint[i];
+				if (n.x < -1 || m_w + 1 <= n.x || n.y < -1 || m_h + 1 <= n.y)
+					continue;
+				if (used[n.y + O][n.x + O]) continue;
+				if (!outOfField(n))
+					if (auto &c = m_field[n.y][n.x].color)
+						if (c.value() == teamId) continue;
+				q.push(n);
+			}
+		}
+
+		int ret_ = 0;
+		for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
+			if (used[y + O][x + O]) continue;
+			if (auto &c = m_field[y][x].color)
+				if (c.value() == teamId) continue;
+			ret_ += s3d::Abs(m_field[y][x].score);
+		}
+		return ret_;
+	};
+	
+	ret.first += specialScore(TeamId::A);
+	ret.second += specialScore(TeamId::B);
+	return ret;
 }
 
 bool Field::checkValid(PlayerId playerId, const Action & a) const {

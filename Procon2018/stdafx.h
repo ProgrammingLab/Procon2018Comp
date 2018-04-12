@@ -2,6 +2,7 @@
 #define NO_S3D_USING
 #include <Siv3D.hpp>
 #include <optional>
+#include <queue>
 
 
 namespace Procon2018 {
