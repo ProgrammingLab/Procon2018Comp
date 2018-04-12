@@ -28,7 +28,8 @@ private:
 	s3d::Color gridColor(const s3d::Point &pos) const;
 
 public:
-
+	
+	// viewport: •`‰æ”ÍˆÍ
 	FieldView(const s3d::RectF &viewport);
 
 	Field field() const;
