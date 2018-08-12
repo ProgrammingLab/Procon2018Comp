@@ -7,9 +7,9 @@ namespace Procon2018 {
 s3d::Color FieldView::gridColor(const s3d::Point & pos) const {
 	const Grid &grid = m_fld.grid(pos);
 	if (!grid.color) return s3d::Color(0, 0);
-	if (grid.color.value() == TeamId::A)
+	if (grid.color.value() == PlayerId::A)
 		return s3d::Color(s3d::Palette::Blue, 100);
-	if (grid.color.value() == TeamId::B)
+	if (grid.color.value() == PlayerId::B)
 		return s3d::Color(s3d::Palette::Red, 100);
 	throw "ÉGÉb";
 }
@@ -51,9 +51,9 @@ void FieldView::update() {
 		}
 	}
 	for (int i = 0; i < 4; i++) {
-		s3d::Point currentPos = m_fld.playerPos((PlayerId)i);
+		s3d::Point currentPos = m_fld.playerPos((AgentId)i);
 		s3d::Point oldPos = m_oldPlayerPos[i];
-		TeamId team = m_fld.teamOf((PlayerId)i);
+		PlayerId team = m_fld.teamOf((AgentId)i);
 		s3d::Color color = team ? s3d::Palette::Red : s3d::Palette::Blue;
 		s3d::Vec2 end = m_v.tl() + s3d::Vec2(
 			currentPos.x*m_gridSize + m_gridSize/2,
@@ -78,7 +78,7 @@ bool FieldView::forward(const std::optional<const Action>& a0,
 		}
 	}
 	for (int i = 0; i < 4; i++) {
-		m_oldPlayerPos[i] = m_fld.playerPos((PlayerId)i);
+		m_oldPlayerPos[i] = m_fld.playerPos((AgentId)i);
 	}
 	bool ret = m_fld.forward(a0, a1, b0, b1);
 	m_sw.restart();

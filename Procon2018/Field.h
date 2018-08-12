@@ -3,13 +3,13 @@
 namespace Procon2018 {
 
 
-enum TeamId {
+enum PlayerId {
 	A = 0,
 	B = 1,
 };
 
 
-enum PlayerId {
+enum AgentId {
 	A0 = 0,
 	A1 = 1,
 	B0 = 2,
@@ -27,7 +27,7 @@ struct Grid {
 
 	int score;
 	
-	std::optional<TeamId> color;
+	std::optional<PlayerId> color;
 };
 
 
@@ -36,6 +36,29 @@ struct Action {
 	ActionType type;
 
 	Direction8 dir;
+
+	Action(ActionType type, Direction8 dir);
+
+	static int ToInt(const std::optional<Action> &a);
+
+	static std::optional<Action> FromInt(int i);
+
+	static int IntCount();
+};
+using OptAction = std::optional<Action>;
+
+
+struct GameMove {
+
+	OptAction a0;
+
+	OptAction a1;
+
+	GameMove(const OptAction &a0, const OptAction &a1);
+
+	int toInt();
+
+	static GameMove FromInt(int i);
 };
 
 
@@ -50,7 +73,7 @@ protected:
 
 	Grid m_field[MAX_H][MAX_W];
 
-	s3d::Point m_player[4];
+	s3d::Point m_agent[4];
 
 public:
 
@@ -66,28 +89,32 @@ public:
 
 	const Grid& grid(const s3d::Point &pos) const;
 
-	const s3d::Point& playerPos(PlayerId playerId) const;
+	const s3d::Point& playerPos(AgentId agentId) const;
 
-	TeamId teamOf(PlayerId playerId) const;
+	PlayerId teamOf(AgentId agentId) const;
 
 	bool outOfField(const s3d::Point &pos) const;
 
 	std::pair<int, int> calcScore() const;
 
-	bool checkValid(PlayerId playerId, const Action &a) const;
+	bool checkValid(AgentId agentId, const Action &a) const;
 
 	// 命令を実行し, ターンを進める
 	// 規定ターン超過の場合はfalseを返す
-	bool forward(const std::optional<const Action> &a0,
-				 const std::optional<const Action> &a1,
-				 const std::optional<const Action> &b0,
-				 const std::optional<const Action> &b1);
+	bool forward(const OptAction &a0,
+				 const OptAction &a1,
+				 const OptAction &b0,
+				 const OptAction &b1);
 
 	// 不正な命令が一つでもあればfalse
-	bool checkAllValid(const std::optional<const Action> &a0,
-					   const std::optional<const Action> &a1,
-					   const std::optional<const Action> &b0,
-					   const std::optional<const Action> &b1) const;
+	bool checkAllValid(const OptAction &a0,
+					   const OptAction &a1,
+					   const OptAction &b0,
+					   const OptAction &b1) const;
+
+	bool forward(const GameMove &m0, const GameMove &m1);
+
+	bool checkAllValid(const GameMove &m0, const GameMove &m1);
 };
 
 
