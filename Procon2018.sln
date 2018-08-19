@@ -5,22 +5,40 @@ VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Procon2018", "Procon2018\Procon2018.vcxproj", "{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SelfPlay", "SelfPlay\SelfPlay.vcxproj", "{90601A3F-FE80-4B74-951A-8CE05248292C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|ARM = Release|ARM
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Debug|ARM.ActiveCfg = Debug|Win32
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Debug|x64.ActiveCfg = Debug|x64
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Debug|x64.Build.0 = Debug|x64
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Debug|x86.ActiveCfg = Debug|Win32
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Debug|x86.Build.0 = Debug|Win32
+		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Release|ARM.ActiveCfg = Release|Win32
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Release|x64.ActiveCfg = Release|x64
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Release|x64.Build.0 = Release|x64
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Release|x86.ActiveCfg = Release|Win32
 		{D54F9A08-185E-47EE-AA27-E9F0F7415FB0}.Release|x86.Build.0 = Release|Win32
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Debug|ARM.ActiveCfg = Debug|ARM
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Debug|ARM.Build.0 = Debug|ARM
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Debug|x64.ActiveCfg = Debug|x64
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Debug|x64.Build.0 = Debug|x64
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Debug|x86.ActiveCfg = Debug|x86
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Debug|x86.Build.0 = Debug|x86
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|ARM.ActiveCfg = Release|ARM
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|ARM.Build.0 = Release|ARM
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|x64.ActiveCfg = Release|x64
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|x64.Build.0 = Release|x64
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|x86.ActiveCfg = Release|x86
+		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
