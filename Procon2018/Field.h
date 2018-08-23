@@ -31,6 +31,7 @@ struct Grid {
 };
 
 
+using IntAction = int;
 struct Action {
 
 	ActionType type;
@@ -39,26 +40,31 @@ struct Action {
 
 	Action(ActionType type, Direction8 dir);
 
-	static int ToInt(const std::optional<Action> &a);
+	static IntAction ToInt(const std::optional<Action> &a);
 
-	static std::optional<Action> FromInt(int i);
+	static std::optional<Action> FromInt(IntAction i);
 
-	static int IntCount();
+	constexpr static int IntCount() { return 17; }
 };
 using OptAction = std::optional<Action>;
 
 
-struct GameMove {
+using IntMove = int;
+struct PlayerMove {
 
 	OptAction a0;
 
 	OptAction a1;
 
-	GameMove(const OptAction &a0, const OptAction &a1);
+	PlayerMove();
 
-	int toInt();
+	PlayerMove(const OptAction &a0, const OptAction &a1);
 
-	static GameMove FromInt(int i);
+	IntMove toInt() const;
+
+	static PlayerMove FromInt(IntMove i);
+
+	constexpr static int IntCount() { return Action::IntCount()*Action::IntCount(); }
 };
 
 
@@ -112,9 +118,11 @@ public:
 					   const OptAction &b0,
 					   const OptAction &b1) const;
 
-	bool forward(const GameMove &m0, const GameMove &m1);
+	bool forward(const PlayerMove &m0, const PlayerMove &m1);
 
-	bool checkAllValid(const GameMove &m0, const GameMove &m1);
+	bool checkAllValid(const PlayerMove &m0, const PlayerMove &m1) const;
+
+	bool checkAllValid(PlayerId playerId, const PlayerMove &m) const;
 };
 
 

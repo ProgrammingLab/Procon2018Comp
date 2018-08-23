@@ -57,6 +57,18 @@
     <ClCompile Include="FieldView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Visualizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mcts.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DnnClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -199,6 +211,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FieldView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Visualizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mcts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DnnClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

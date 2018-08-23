@@ -5,11 +5,13 @@
 
 #include <cstdio>
 #include <iostream>
+#include <string>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 #include <boost/asio.hpp>
+#include "Field.h"
 
 int main()
 {
@@ -29,6 +31,18 @@ int main()
 	else {
 		std::cout << "connected" << std::endl;
 	}
+
+	using namespace boost::property_tree;
+	ptree pt;
+	pt.put("Ho.Ge", "hoge");
+	std::stringstream ss;
+	write_json(ss, pt);
+	std::string body = ss.str();
+	std::string sign = std::to_string(body.size()*sizeof(char));
+	if (sign.size() > 10) throw "too large";
+	while (sign.size() < 10) sign.push_back(' ');
+	asio::write(socket, asio::buffer(sign)); //データの長さの10バイト文字列表現
+	asio::write(socket, asio::buffer(body)); //自動で全部送るらしい
 	// */
 
 	/*

@@ -100,19 +100,19 @@ std::pair<int, int> Field::calcScore() const {
 	return ret;
 }
 
-bool Field::checkValid(AgentId playerId, const Action & a) const {
+bool Field::checkValid(AgentId agentId, const Action & a) const {
 	if (a.type == ActionType::Move) {
-		s3d::Point next = m_agent[playerId] + Neighbour8(a.dir);
+		s3d::Point next = m_agent[agentId] + Neighbour8(a.dir);
 		if (outOfField(next)) return false;
 		if (auto &c = m_field[next.y][next.x].color)
-			if (c.value() != teamOf(playerId)) return false;
+			if (c.value() != teamOf(agentId)) return false;
 		return true;
 	}
 	if (a.type == ActionType::Remove) {
-		s3d::Point target = m_agent[playerId] + Neighbour8(a.dir);
+		s3d::Point target = m_agent[agentId] + Neighbour8(a.dir);
 		if (outOfField(target)) return false;
 		if (auto &c = m_field[target.y][target.x].color)
-			if (c.value() != teamOf(playerId)) return true;
+			if (c.value() != teamOf(agentId)) return true;
 		return false;
 	}
 	throw "ÉGÉb";
@@ -184,43 +184,47 @@ bool Field::checkAllValid(const OptAction& a0,
 	return true;
 }
 
-bool Field::forward(const GameMove & m0, const GameMove & m1) {
+bool Field::forward(const PlayerMove & m0, const PlayerMove & m1) {
 	return forward(m0.a0, m0.a1, m1.a0, m1.a1);
 }
 
-bool Field::checkAllValid(const GameMove & m0, const GameMove & m1) {
+bool Field::checkAllValid(const PlayerMove & m0, const PlayerMove & m1) const {
 	return checkAllValid(m0.a0, m0.a1, m1.a0, m1.a1);
+}
+
+bool Field::checkAllValid(PlayerId playerId, const PlayerMove & m) const {
+	AgentId i0 = (AgentId)((int)playerId*2);
+	AgentId i1 = (AgentId)((int)playerId*2 + 1);
+	return (!m.a0 || checkValid(i0, m.a0.value())) && (!m.a1 || checkValid(i1, m.a1.value()));
 }
 
 
 Action::Action(ActionType type, Direction8 dir) : type(type), dir(dir) {}
 
-int Action::ToInt(const std::optional<Action>& a) {
+IntAction Action::ToInt(const std::optional<Action>& a) {
 	if (!a) return 0;
 	ActionType type = a.value().type;
 	Direction8 dir = a.value().dir;
 	return (type == ActionType::Remove ? 8 : 0) + dir + 1;
 }
 
-std::optional<Action> Action::FromInt(int i) {
+std::optional<Action> Action::FromInt(IntAction i) {
 	using Opt = std::optional<Action>;
 	if (i == 0) return Opt();
 	if (i < 9) return Opt(Action(ActionType::Move, (Direction8)(i - 1)));
 	return Opt(Action(ActionType::Remove, (Direction8)(i - 9)));
 }
 
-int Action::IntCount() {
-	return 17;
-}
+PlayerMove::PlayerMove() : a0(), a1() {}
 
-GameMove::GameMove(const OptAction & a0, const OptAction & a1) : a0(a0), a1(a1) {}
+PlayerMove::PlayerMove(const OptAction & a0, const OptAction & a1) : a0(a0), a1(a1) {}
 
-int GameMove::toInt() {
+int PlayerMove::toInt() const {
 	return Action::ToInt(a0)*17 + Action::ToInt(a1);
 }
 
-GameMove GameMove::FromInt(int i) {
-	return GameMove( Action::FromInt(i / Action::IntCount()), Action::FromInt(i % Action::IntCount()) );
+PlayerMove PlayerMove::FromInt(IntMove i){
+	return PlayerMove( Action::FromInt(i / Action::IntCount()), Action::FromInt(i % Action::IntCount()) );
 }
 
 
