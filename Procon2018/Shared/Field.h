@@ -11,10 +11,10 @@ enum class PlayerId {
 
 
 enum class AgentId {
-	A0 = 0,
-	A1 = 1,
-	B0 = 2,
-	B1 = 3,
+	A_0 = 0,
+	A_1 = 1,
+	B_0 = 2,
+	B_1 = 3,
 };
 
 
