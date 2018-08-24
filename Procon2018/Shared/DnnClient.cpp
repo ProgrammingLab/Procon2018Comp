@@ -1,5 +1,4 @@
-#include "stdafx.h"
-#include "DnnClient.h"
+﻿#include "DnnClient.h"
 
 
 DnnClient::DnnClient() {}

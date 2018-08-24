@@ -1,4 +1,4 @@
-#include "Node.h"
+﻿#include "Node.h"
 
 namespace Procon2018 {
 
@@ -38,10 +38,10 @@ IntMove Node::decideMove(PlayerId playerId, const Field & field) const {
 		if (!field.checkAllValid(playerId, PlayerMove::FromInt(i)))
 			continue;
 		double c = 1.0;
-		double w = m_w[playerId][i];
-		double n = m_count[playerId][i];
+		double w = m_w[(int)playerId][i];
+		double n = m_count[(int)playerId][i];
 		double q = (n > 0 ? w/n : 0);
-		double p = m_policyPair[playerId][i];
+		double p = m_policyPair[(int)playerId][i];
 		double u = c * p * std::sqrt(m_countSum) / (1 + n);
 		if (res == -1 || max < q + u) {
 			max = q + u;

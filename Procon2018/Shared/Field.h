@@ -1,15 +1,16 @@
-#pragma once
+ï»¿#pragma once
+#include "Util.h"
 
 namespace Procon2018 {
 
 
-enum PlayerId {
+enum class PlayerId {
 	A = 0,
 	B = 1,
 };
 
 
-enum AgentId {
+enum class AgentId {
 	A0 = 0,
 	A1 = 1,
 	B0 = 2,
@@ -17,9 +18,9 @@ enum AgentId {
 };
 
 
-enum ActionType {
-	Move = 0,   // ˆÚ“®
-	Remove = 1, // ƒ^ƒCƒ‹œ‹
+enum class ActionType {
+	Move = 0,   // ç§»å‹•
+	Remove = 1, // ã‚¿ã‚¤ãƒ«é™¤å»
 };
 
 
@@ -79,7 +80,7 @@ protected:
 
 	Grid m_field[MAX_H][MAX_W];
 
-	s3d::Point m_agent[4];
+	Point m_agent[4];
 
 public:
 
@@ -93,26 +94,26 @@ public:
 	
 	int h() const;
 
-	const Grid& grid(const s3d::Point &pos) const;
+	const Grid& grid(const Point &pos) const;
 
-	const s3d::Point& playerPos(AgentId agentId) const;
+	const Point& playerPos(AgentId agentId) const;
 
 	PlayerId teamOf(AgentId agentId) const;
 
-	bool outOfField(const s3d::Point &pos) const;
+	bool outOfField(const Point &pos) const;
 
 	std::pair<int, int> calcScore() const;
 
 	bool checkValid(AgentId agentId, const Action &a) const;
 
-	// –½—ß‚ğÀs‚µ, ƒ^[ƒ“‚ği‚ß‚é
-	// ‹K’èƒ^[ƒ“’´‰ß‚Ìê‡‚Ífalse‚ğ•Ô‚·
+	// å‘½ä»¤ã‚’å®Ÿè¡Œã—, ã‚¿ãƒ¼ãƒ³ã‚’é€²ã‚ã‚‹
+	// è¦å®šã‚¿ãƒ¼ãƒ³è¶…éã®å ´åˆã¯falseã‚’è¿”ã™
 	bool forward(const OptAction &a0,
 				 const OptAction &a1,
 				 const OptAction &b0,
 				 const OptAction &b1);
 
-	// •s³‚È–½—ß‚ªˆê‚Â‚Å‚à‚ ‚ê‚Îfalse
+	// ä¸æ­£ãªå‘½ä»¤ãŒä¸€ã¤ã§ã‚‚ã‚ã‚Œã°false
 	bool checkAllValid(const OptAction &a0,
 					   const OptAction &a1,
 					   const OptAction &b0,

@@ -1,17 +1,17 @@
-#include "FieldView.h"
+ï»¿#include "FieldView.h"
 
 
 namespace Procon2018 {
 
 
-s3d::Color FieldView::gridColor(const s3d::Point & pos) const {
+s3d::Color FieldView::gridColor(const Point & pos) const {
 	const Grid &grid = m_fld.grid(pos);
 	if (!grid.color) return s3d::Color(0, 0);
 	if (grid.color.value() == PlayerId::A)
 		return s3d::Color(s3d::Palette::Blue, 100);
 	if (grid.color.value() == PlayerId::B)
 		return s3d::Color(s3d::Palette::Red, 100);
-	throw "ƒGƒb";
+	throw "ã‚¨ãƒƒ";
 }
 
 FieldView::FieldView(const s3d::RectF & viewport)
@@ -51,10 +51,10 @@ void FieldView::update() {
 		}
 	}
 	for (int i = 0; i < 4; i++) {
-		s3d::Point currentPos = m_fld.playerPos((AgentId)i);
-		s3d::Point oldPos = m_oldPlayerPos[i];
+		Point currentPos = m_fld.playerPos((AgentId)i);
+		Point oldPos = m_oldPlayerPos[i];
 		PlayerId team = m_fld.teamOf((AgentId)i);
-		s3d::Color color = team ? s3d::Palette::Red : s3d::Palette::Blue;
+		s3d::Color color = team == PlayerId::B ? s3d::Palette::Red : s3d::Palette::Blue;
 		s3d::Vec2 end = m_v.tl() + s3d::Vec2(
 			currentPos.x*m_gridSize + m_gridSize/2,
 			currentPos.y*m_gridSize + m_gridSize/2

@@ -1,4 +1,4 @@
-#include "Visualizer.h"
+﻿#include "Visualizer.h"
 
 
 namespace Procon2018 {
@@ -13,10 +13,9 @@ Visualizer::Visualizer()
 
 void Visualizer::update() {
 	auto randomAction = []() {
-		Action ret;
-		ret.type = (ActionType)s3d::Random(1);
-		ret.dir = (Direction8)s3d::Random(7);
-		return ret;
+		ActionType type = (ActionType)s3d::Random(1);
+		Direction8 dir = (Direction8)s3d::Random(7);
+		return Action(type, dir);
 	};
 
 	if (m_sw.sF() >= m_interval.count()) {

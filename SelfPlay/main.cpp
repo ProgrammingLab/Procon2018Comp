@@ -1,4 +1,4 @@
-#define BOOST_DATE_TIME_NO_LIB
+ï»¿#define BOOST_DATE_TIME_NO_LIB
 #define BOOST_REGEX_NO_LIB
 #define BOOST_ERROR_CODE_HEADER_ONLY
 #define BOOST_SYSTEM_NO_LIB
@@ -9,9 +9,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
-#include <boost/optional.hpp>
 #include <boost/asio.hpp>
-#include "Field.h"
+#include "../Procon2018/Shared/Field.h"
 
 int main()
 {
@@ -41,14 +40,14 @@ int main()
 	std::string sign = std::to_string(body.size()*sizeof(char));
 	if (sign.size() > 10) throw "too large";
 	while (sign.size() < 10) sign.push_back(' ');
-	asio::write(socket, asio::buffer(sign)); //ƒf[ƒ^‚Ì’·‚³‚Ì10ƒoƒCƒg•¶Žš—ñ•\Œ»
-	asio::write(socket, asio::buffer(body)); //Ž©“®‚Å‘S•”‘—‚é‚ç‚µ‚¢
+	asio::write(socket, asio::buffer(sign)); //ãƒ‡ãƒ¼ã‚¿ã®é•·ã•ã®10ãƒã‚¤ãƒˆæ–‡å­—åˆ—è¡¨ç¾
+	asio::write(socket, asio::buffer(body)); //è‡ªå‹•ã§å…¨éƒ¨é€ã‚‹ã‚‰ã—ã„
 	// */
 
 	/*
 	using namespace boost::property_tree;
 	ptree pt;
-	pt.put("Ho.Ge", u8"‚Ù‚°");
+	pt.put("Ho.Ge", u8"ã»ã’");
 	write_json("out.json", pt);
 	// */
     return 0;

@@ -61,71 +61,93 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-    <RemoteCppCompileToolExe>g++-5</RemoteCppCompileToolExe>
-    <RemoteCCompileToolExe>g++-5</RemoteCCompileToolExe>
+    <RemoteCCompileToolExe>g++-7</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>g++-7</RemoteCppCompileToolExe>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
-    <RemoteCppCompileToolExe>g++-5</RemoteCppCompileToolExe>
-    <RemoteCCompileToolExe>g++-5</RemoteCCompileToolExe>
+    <RemoteCCompileToolExe>g++-7</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>g++-7</RemoteCppCompileToolExe>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>
     </IncludePath>
     <LibraryPath>
     </LibraryPath>
+    <RemoteCCompileToolExe>g++-7</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>g++-7</RemoteCppCompileToolExe>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>
     </IncludePath>
     <LibraryPath>
     </LibraryPath>
+    <RemoteCCompileToolExe>g++-7</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>g++-7</RemoteCppCompileToolExe>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <RemoteCppCompileToolExe>g++-5</RemoteCppCompileToolExe>
-    <RemoteCCompileToolExe>g++-5</RemoteCCompileToolExe>
+    <RemoteCCompileToolExe>g++-7</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>g++-7</RemoteCppCompileToolExe>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
-    <RemoteCppCompileToolExe>g++-5</RemoteCppCompileToolExe>
-    <RemoteCCompileToolExe>g++-5</RemoteCCompileToolExe>
+    <SourcePath>
+    </SourcePath>
+    <RemoteCCompileToolExe>g++-7</RemoteCCompileToolExe>
+    <RemoteCppCompileToolExe>g++-7</RemoteCppCompileToolExe>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="..\Procon2018\Shared\DnnClient.cpp" />
+    <ClCompile Include="..\Procon2018\Shared\Field.cpp" />
+    <ClCompile Include="..\Procon2018\Shared\Mcts.cpp" />
+    <ClCompile Include="..\Procon2018\Shared\Node.cpp" />
+    <ClCompile Include="..\Procon2018\Shared\Util.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Procon2018\Shared\DnnClient.h" />
+    <ClInclude Include="..\Procon2018\Shared\Field.h" />
+    <ClInclude Include="..\Procon2018\Shared\Mcts.h" />
+    <ClInclude Include="..\Procon2018\Shared\Node.h" />
+    <ClInclude Include="..\Procon2018\Shared\Util.h" />
+  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
       <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile />
     <ClCompile />
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile />
     <ClCompile />
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
       <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <ClCompile>
       <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

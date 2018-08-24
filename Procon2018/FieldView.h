@@ -1,6 +1,6 @@
-#pragma once
-#include "Field.h"
-
+ï»¿#pragma once
+#include "Shared/Field.h"
+#include "Shared/Util.h"
 
 namespace Procon2018 {
 
@@ -22,14 +22,14 @@ private:
 
 	s3d::Color m_oldColor[Field::MAX_H][Field::MAX_W];
 
-	s3d::Point m_oldPlayerPos[4];
+	Point m_oldPlayerPos[4];
 
 
-	s3d::Color gridColor(const s3d::Point &pos) const;
+	s3d::Color gridColor(const Point &pos) const;
 
 public:
 	
-	// viewport: •`‰æ”ÍˆÍ
+	// viewport: æç”»ç¯„å›²
 	FieldView(const s3d::RectF &viewport);
 
 	Field field() const;

@@ -1,7 +1,4 @@
-#include "Field.h"
-#include "stdafx.h"
-
-using namespace s3d;
+Ôªø#include "Field.h"
 
 
 namespace Procon2018 {
@@ -15,8 +12,8 @@ Field::Field()
 , m_field()
 , m_agent{ {1, 1}, {11, 11}, {11, 1}, {1, 11} } {
 	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
-		m_field[y][x].score = s3d::Random(-16, 16);
-		if (s3d::Random(1)) m_field[y][x].color = std::make_optional((PlayerId)s3d::Random(1));
+		m_field[y][x].score = Rand::Next(-16, 16 + 1);
+		if (Rand::Next(2)) m_field[y][x].color = std::make_optional((PlayerId)Rand::Next(2));
 	}
 }
 
@@ -41,11 +38,11 @@ const Grid& Field::grid(const Point &pos) const {
 }
 
 const Point& Field::playerPos(AgentId playerId) const {
-	return m_agent[playerId];
+	return m_agent[(int)playerId];
 }
 
 PlayerId Field::teamOf(AgentId playerId) const {
-	return playerId < 2 ? PlayerId::A : PlayerId::B;
+	return (int)playerId < 2 ? PlayerId::A : PlayerId::B;
 }
 
 bool Field::outOfField(const Point &pos) const {
@@ -59,22 +56,22 @@ std::pair<int, int> Field::calcScore() const {
 		if (!c) continue;
 		if (c.value() == PlayerId::A) ret.first += m_field[y][x].score;
 		else if (c.value() == PlayerId::B) ret.second += m_field[y][x].score;
-		else throw "ÉGÉb";
+		else throw "„Ç®„ÉÉ";
 	}
 
 	auto specialScore = [&](PlayerId teamId) {
-		constexpr s3d::Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
+		constexpr Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
 		const int O = 1;
 		bool used[Field::MAX_H + 2][Field::MAX_W + 2] = {};
 		
-		std::queue<s3d::Point> q;
+		std::queue<Point> q;
 		q.push({-1, -1});
 		while (!q.empty()) {
-			const s3d::Point f = q.front(); q.pop();
+			const Point f = q.front(); q.pop();
 			if (used[f.y + O][f.x + O]) continue;
 			used[f.y + O][f.x + O] = true;
 			for (int i = 0; i < 4; i++) {
-				const s3d::Point n = f + dirPoint[i];
+				const Point n = f + dirPoint[i];
 				if (n.x < -1 || m_w + 1 <= n.x || n.y < -1 || m_h + 1 <= n.y)
 					continue;
 				if (used[n.y + O][n.x + O]) continue;
@@ -90,7 +87,7 @@ std::pair<int, int> Field::calcScore() const {
 			if (used[y + O][x + O]) continue;
 			if (auto &c = m_field[y][x].color)
 				if (c.value() == teamId) continue;
-			ret_ += s3d::Abs(m_field[y][x].score);
+			ret_ += std::abs(m_field[y][x].score);
 		}
 		return ret_;
 	};
@@ -102,20 +99,20 @@ std::pair<int, int> Field::calcScore() const {
 
 bool Field::checkValid(AgentId agentId, const Action & a) const {
 	if (a.type == ActionType::Move) {
-		s3d::Point next = m_agent[agentId] + Neighbour8(a.dir);
+		Point next = m_agent[(int)agentId] + Neighbour8(a.dir);
 		if (outOfField(next)) return false;
 		if (auto &c = m_field[next.y][next.x].color)
 			if (c.value() != teamOf(agentId)) return false;
 		return true;
 	}
 	if (a.type == ActionType::Remove) {
-		s3d::Point target = m_agent[agentId] + Neighbour8(a.dir);
+		Point target = m_agent[(int)agentId] + Neighbour8(a.dir);
 		if (outOfField(target)) return false;
 		if (auto &c = m_field[target.y][target.x].color)
 			if (c.value() != teamOf(agentId)) return true;
 		return false;
 	}
-	throw "ÉGÉb";
+	throw "„Ç®„ÉÉ";
 }
 
 bool Field::forward(const OptAction& a0,
@@ -125,30 +122,30 @@ bool Field::forward(const OptAction& a0,
 	if (m_turn >= m_maxTurn) return false;
 
 	const OptAction* v[4] = {&a0, &a1, &b0, &b1 };
-	s3d::Point pos[4];
-	std::optional<s3d::Point> target[4];
+	Point pos[4];
+	std::optional<Point> target[4];
 	for (int i = 0; i < 4; i++) {
 		pos[i] = m_agent[i];
-		if (!*v[i]) continue; // í‚óØ
+		if (!*v[i]) continue; // ÂÅúÁïô
 		const Action &a = v[i]->value();
-		if (!checkValid((AgentId)i, a)) continue; // ïsê≥
-		s3d::Point p = m_agent[i] + Neighbour8(a.dir);
+		if (!checkValid((AgentId)i, a)) continue; // ‰∏çÊ≠£
+		Point p = m_agent[i] + Neighbour8(a.dir);
 		if (a.type == ActionType::Move)
 			pos[i] = p;
 		else if (a.type == ActionType::Remove) {
 			target[i] = p;
 		}
-		else throw ("ÉGÉb");
+		else throw ("„Ç®„ÉÉ");
 	}
 
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < i; j++) {
-			// çsÇ´êÊÇ™îÌÇ¡ÇΩÇÃÇ≈ñ≥å¯
+			// Ë°å„ÅçÂÖà„ÅåË¢´„Å£„Åü„ÅÆ„ÅßÁÑ°Âäπ
 			if (pos[j] == pos[i]) {
 				pos[i] = m_agent[i];
 				pos[j] = m_agent[j];
 			}
-			// èúãéêÊÇ™îÌÇ¡ÇΩÇÃÇ≈ñ≥å¯
+			// Èô§ÂéªÂÖà„ÅåË¢´„Å£„Åü„ÅÆ„ÅßÁÑ°Âäπ
 			if ((target[i] && target[j]) && target[j].value() == target[i].value()) {
 				target[i].reset();
 				target[j].reset();
@@ -156,13 +153,13 @@ bool Field::forward(const OptAction& a0,
 		}
 	}
 
-	// èúãéèàóù
+	// Èô§ÂéªÂá¶ÁêÜ
 	for (int i = 0; i < 4; i++) {
 		if (!target[i]) continue;
 		m_field[target[i].value().y][target[i].value().x].color.reset();
 	}
 	
-	// ìhÇËäGèàóù
+	// Â°ó„ÇäÁµµÂá¶ÁêÜ
 	for (int i = 0; i < 4; i++) {
 		m_agent[i] = pos[i];
 		m_field[pos[i].y][pos[i].x].color = teamOf((AgentId)i);

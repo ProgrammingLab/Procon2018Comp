@@ -48,9 +48,6 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Field.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -60,13 +57,19 @@
     <ClCompile Include="Visualizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Node.cpp">
+    <ClCompile Include="Shared\DnnClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Mcts.cpp">
+    <ClCompile Include="Shared\Field.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DnnClient.cpp">
+    <ClCompile Include="Shared\Mcts.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Shared\Node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Shared\Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -204,9 +207,6 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Field.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -216,13 +216,19 @@
     <ClInclude Include="Visualizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Node.h">
+    <ClInclude Include="Shared\DnnClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Mcts.h">
+    <ClInclude Include="Shared\Field.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DnnClient.h">
+    <ClInclude Include="Shared\Mcts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -197,18 +197,19 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DnnClient.cpp" />
-    <ClCompile Include="Field.cpp" />
     <ClCompile Include="FieldView.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Mcts.cpp" />
-    <ClCompile Include="Node.cpp" />
+    <ClCompile Include="Shared\DnnClient.cpp" />
+    <ClCompile Include="Shared\Field.cpp" />
+    <ClCompile Include="Shared\Mcts.cpp" />
+    <ClCompile Include="Shared\Node.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Shared\Util.cpp" />
     <ClCompile Include="Visualizer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -263,12 +264,13 @@
     <Text Include="App\example\test.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DnnClient.h" />
-    <ClInclude Include="Field.h" />
     <ClInclude Include="FieldView.h" />
-    <ClInclude Include="Mcts.h" />
-    <ClInclude Include="Node.h" />
+    <ClInclude Include="Shared\DnnClient.h" />
+    <ClInclude Include="Shared\Field.h" />
+    <ClInclude Include="Shared\Mcts.h" />
+    <ClInclude Include="Shared\Node.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Shared\Util.h" />
     <ClInclude Include="Visualizer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
