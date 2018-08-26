@@ -17,7 +17,7 @@ std::pair<PlayerMove, PlayerMove> Node::ToMoves(IntMoves i) {
 	return std::pair<PlayerMove, PlayerMove>(fst, scd);
 }
 
-Node::Node(const std::array<Policy, 2>& policyPair)
+Node::Node(const PolicyPair& policyPair)
 : m_w()
 , m_count()
 , m_countSum(0)

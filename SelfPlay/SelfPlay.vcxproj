@@ -114,13 +114,15 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <AdditionalOptions>-lboost_system -fopenmp</AdditionalOptions>
       <CppLanguageStandard>c++17</CppLanguageStandard>
+      <PreprocessorDefinitions>
+      </PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
-      <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <AdditionalOptions>-lboost_system -fopenmp</AdditionalOptions>
       <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -129,6 +131,9 @@
     <ClCompile />
     <ClCompile>
       <CppLanguageStandard>c++17</CppLanguageStandard>
+      <PreprocessorDefinitions>
+      </PreprocessorDefinitions>
+      <AdditionalOptions>-lboost_system -fopenmp</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,17 +141,20 @@
     <ClCompile />
     <ClCompile>
       <CppLanguageStandard>c++17</CppLanguageStandard>
+      <AdditionalOptions>-lboost_system -fopenmp</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <AdditionalOptions>-lboost_system -fopenmp</AdditionalOptions>
       <CppLanguageStandard>c++17</CppLanguageStandard>
+      <PreprocessorDefinitions>
+      </PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <ClCompile>
-      <AdditionalOptions>-lboost_system</AdditionalOptions>
+      <AdditionalOptions>-lboost_system -fopenmp</AdditionalOptions>
       <CppLanguageStandard>c++17</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>

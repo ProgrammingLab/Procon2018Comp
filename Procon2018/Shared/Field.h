@@ -76,7 +76,7 @@ public:
 
 protected:
 
-	int m_maxTurn, m_turn, m_w, m_h;
+	int m_resTurn, m_w, m_h;
 
 	Grid m_field[MAX_H][MAX_W];
 
@@ -84,11 +84,19 @@ protected:
 
 public:
 
+	static int ApproximateGause(int n, int start, int end);
+
+	static Field RandomState();
+
 	Field();
 
-	int maxTurn() const;
+	Field(int resTurn,
+		  int h,
+		  int w,
+		  const std::vector<std::vector<Grid>> &field,
+		  const std::array<Point, 4> &agent);
 
-	int turn() const;
+	int resTurn() const;
 
 	int w() const;
 	
@@ -124,6 +132,8 @@ public:
 	bool checkAllValid(const PlayerMove &m0, const PlayerMove &m1) const;
 
 	bool checkAllValid(PlayerId playerId, const PlayerMove &m) const;
+
+	boost::property_tree::ptree toPTree() const;
 };
 
 

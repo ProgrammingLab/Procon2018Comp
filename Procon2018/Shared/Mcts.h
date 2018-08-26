@@ -1,10 +1,42 @@
 ﻿#pragma once
+#include "Util.h"
+#include "DnnClient.h"
+#include "Field.h"
+
+
+namespace Procon2018 {
+//TODO: 通信のエラー処理
+//TODO: fieldがgoDown()のはじめからゲーム終了の場合
 
 class Mcts {
+private:
+
+	Field m_rootState;
+
+	SP<Node> m_root;
+
 public:
 
-	Mcts();
+	Mcts(const Field &rootState, SP<DnnClient> dnn);
 	
 	~Mcts();
+
+	// fieldは変更され, 最終的に, 評価が必要な盤面になる
+	// pathに, 後のbackupで使う経路が根から順に入る
+	// return: fieldがゲーム終了状態ならtrue
+	// nodeがnullなら何もしない
+	bool goDown(SP<Node> node, Field &field, std::vector<IntMoves> &path);
+
+	// 評価結果vをバックアップ
+	// expands: 下端のノードを展開するか (fieldがゲーム終了状態になる経路なら, 絶対に展開しないべき)
+	void backup(const std::vector<IntMoves> &path, double v, const PolicyPair &policyPair, bool expands);
+
+	// 自己対局を1ターン進める. 根ノードも取り替える.
+	// ゲームが終了した時trueを返す. 以降呼び出されても何もしない
+	// temperatureが1に近づくほど, 訪問回数に比例した確率で手を選ぶ
+	// temperatureが0に近づくほど, 訪問回数の多い手をひいきする
+	bool selfNext(double temperature, SP<DnnClient> dnn);
 };
 
+
+}

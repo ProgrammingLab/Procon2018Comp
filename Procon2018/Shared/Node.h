@@ -1,15 +1,17 @@
 ﻿#pragma once
-#include "Field.h"
 #include "Util.h"
+#include "Field.h"
 
 namespace Procon2018 {
 
 
-using Policy = std::array<double, PlayerMove::IntCount()>;
 using IntMoves = int;
+using Policy = std::array<double, PlayerMove::IntCount()>;
+using PolicyPair = std::array<Policy, 2>; //2プレイヤー分の方策
+
 
 class Node {
-private:
+public: // 強引なpublicは天才プログラマの特権 #アゲてこうぜ #副作用楽勝 #privateは陰キャ #実質構造体
 
 	std::array<std::array<double, PlayerMove::IntCount()>, 2> m_w;
 	
@@ -17,11 +19,12 @@ private:
 	
 	int m_countSum;
 	
-	std::array<Policy, 2> m_policyPair;
+	PolicyPair m_policyPair;
 	
-	std::map<int, Node> m_next;
-	
-public:
+	std::map<IntMoves, SP<Node>> m_next;
+
+
+
 	
 	static IntMoves ToInt(const std::pair<PlayerMove, PlayerMove> &movePair);
 
@@ -29,7 +32,8 @@ public:
 
 	static std::pair<PlayerMove, PlayerMove> ToMoves(IntMoves i);
 
-	Node(const std::array<Policy, 2> &policyPair);
+	// 実体化するのは訪れる時だけ (展開時は実体化まではしない)
+	Node(const PolicyPair &policyPair);
 
 	IntMove decideMove(PlayerId playerId, const Field &field) const;
 

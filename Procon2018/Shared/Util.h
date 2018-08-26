@@ -1,4 +1,18 @@
 ﻿#pragma once
+
+// Ubuntu環境において、これらをせずにboost::asioをincluideするとコンパイルエラー
+// 環境構築が下手なだけかもしれないが
+#define BOOST_DATE_TIME_NO_LIB
+#define BOOST_REGEX_NO_LIB
+#define BOOST_ERROR_CODE_HEADER_ONLY
+#define BOOST_SYSTEM_NO_LIB
+#define BOOST_SYSTEM_NO_DEPRECATED
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/asio.hpp>
+
 #include <optional>
 #include <queue>
 #include <cmath>
@@ -7,6 +21,7 @@
 #include <map>
 #include <chrono>
 #include <climits>
+#include <iostream>
 
 
 namespace Procon2018 {
@@ -19,7 +34,7 @@ template<class T> using WP = std::weak_ptr<T>;
 
 struct Point {
 	int x, y;
-	Point() : x(0), y(0) {}
+	Point();
 	constexpr Point(int x, int y) : x(x), y(y) {}
 	bool operator == (const Point &p) const;
 	Point operator + (const Point &p) const;
@@ -44,18 +59,26 @@ Point Neighbour8(Direction8 dir);
 class Rand
 {
 private:
+
 	static unsigned int x;
 	static unsigned int y;
 	static unsigned int z;
 	static unsigned int w;
 
 public:
+
 	void InitializeWithTime();
-	//[min, max)
-	static const int Next(int min, int max);
-	//[0, max)
-	static int Next(int max);
-	static const double DNext();
+
+	// [start, end)
+	static int Next(int start, int end);
+
+	// [0, count)
+	static int Next(int count);
+
+	// [0, 1]
+	static double DNext();
+
+	static int WeightRand(const std::vector<double> &weight);
 };
 
 

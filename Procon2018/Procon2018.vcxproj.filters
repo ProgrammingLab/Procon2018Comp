@@ -188,6 +188,7 @@
     <None Include="App\example\a1a_training">
       <Filter>Resource Files\example</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="App\example\test.txt">

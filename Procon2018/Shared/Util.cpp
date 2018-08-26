@@ -24,23 +24,44 @@ void Rand::InitializeWithTime() {
 	//cout << w << endl;
 }
 
-const int Rand::Next(int min, int max) {
+int Rand::Next(int start, int end) {
 	unsigned int t;
 	t = x ^ (x << 11);
 	x = y;
 	y = z;
 	z = w;
 	w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-	return (int)(min + (double)w*(max - min) / ((double)UINT_MAX + 1));
+	return (int)(start + (double)w*(end - start) / ((double)UINT_MAX + 1));
 }
 
-int Rand::Next(int max) {
-	return Next(0, max);
+int Rand::Next(int count) {
+	return Next(0, count);
 }
 
-const double Rand::DNext() {
+double Rand::DNext() {
 	return Next(INT_MAX)/(double)(INT_MAX - 1);
 }
+
+int Rand::WeightRand(const std::vector<double>& weight) {
+	double sum = 0;
+	double maxW = 0;
+	int maxIdx = -1;
+	for (int i = 0; i < (int)weight.size(); i++) {
+		sum += weight[i];
+		if (maxIdx == -1 || maxW < weight[i]) {
+			maxW = weight[i];
+			maxIdx = i;
+		}
+	}
+	double r = DNext();
+	for (int i = 0; i < (int)weight.size(); i++) {
+		r -= weight[i]/sum;
+		if (r <= 1e-10) return i;
+	}
+	return maxIdx;
+}
+
+Point::Point() : x(0), y(0) {}
 
 bool Point::operator==(const Point & p) const {
 	return x == p.x && y == p.y;
