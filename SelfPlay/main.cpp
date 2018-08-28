@@ -12,11 +12,74 @@
 
 #include "../Procon2018/Shared/Field.h"
 #include "../Procon2018/Shared/DnnClient.h"
+#include "../Procon2018/Shared/Mcts.h"
+
+using namespace Procon2018;
+
+void SelfPlay() {
+	
+}
+
+void MctsTest() {
+	int score[4][5] = {
+		{0, 0, 1, 0, 0},
+		{0,-2, 1,-2, 0},
+		{0, 0, 1, 0, 0},
+		{0, 0, 1, 0, 0}
+	};
+	int color[4][5] = {
+		{1, 1, 0, 0, 1},
+		{0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0},
+		{2, 0, 0, 0, 2}
+	};
+	std::vector<std::vector<Grid>> fld(4);
+	for (int i = 0; i < 4; i++) {
+		fld[i].resize(5);
+		for (int j = 0; j < 5; j++) {
+			fld[i][j].score = score[i][j];
+			if (color[i][j] == 1) fld[i][j].color = std::make_optional(PlayerId::A);
+			if (color[i][j] == 2) fld[i][j].color = std::make_optional(PlayerId::B);
+		}
+	}
+	std::array<Point, 4> agent = {Point(0, 0), Point(4, 0), Point(0, 3), Point(4, 3)};
+	Field first(2, 4, 5, fld, agent);
+	SP<DnnClient> dnn = SP<DnnClient>(new DnnClient("127.0.0.1", 54215));
+	Mcts mcts(first, dnn);
+	for (int i = 0; i < 1000; i++) {
+		std::cout << i << std::endl;
+		Field state = mcts.copyRootState();
+		std::vector<IntMoves> path;
+		bool expands = !mcts.goDown(state, path);
+		
+		PolicyPair policyPair;
+		double v = dnn->Evaluate(state, policyPair);
+
+		mcts.backup(path, v, policyPair, expands);
+	}
+
+	// debug output
+	/*SP<Node> root = mcts.root();
+	for (IntMove i = 0; i < PlayerMove::IntCount(); i++) {
+		auto show = [](const OptAction &a) {
+			if (!a) return std::string("..");
+			std::string ret = (a.value().type == ActionType::Move ? "m" : "r");
+			ret += std::to_string((int)a.value().dir);
+			return ret;
+		};
+		int p0 = root->m_count[0][(int)i];
+		int p1 = root->m_count[1][(int)i];
+		PlayerMove move = PlayerMove::FromInt(i);
+		std::cout << "(" + show(move.a0) + "," << show(move.a1) << ") : (" << p0 << "," << p1 << ")" << std::endl;
+	}*/
+
+	mcts.selfNext(0, dnn);
+}
 
 int main()
 {
-	// /*
-	using namespace Procon2018;
+	MctsTest();
+	/*
 	Field field = Field::RandomState();
 	SP<DnnClient> dnn;
 	while (true) {
@@ -43,7 +106,6 @@ int main()
 
 
 	/*
-	using namespace Procon2018;
 	Field field = Field::RandomState();
 	using namespace boost::property_tree;
 	ptree pt = field.toPTree();
@@ -85,7 +147,7 @@ int main()
 	/*
 	using namespace boost::property_tree;
 	ptree pt;
-	pt.put("Ho.Ge", u8"ほげ");
+	pt.put("Ho.Ge", u8"ほげ"); //文字化けするよ
 	write_json("out.json", pt);
 	// */
     return 0;

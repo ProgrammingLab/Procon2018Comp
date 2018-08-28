@@ -12,6 +12,14 @@ Mcts::Mcts(const Field & rootState, SP<DnnClient> dnn) : m_rootState(rootState) 
 
 Mcts::~Mcts() {}
 
+Field Mcts::copyRootState() const {
+	return Field(m_rootState);
+}
+
+SP<Node> Mcts::root() const {
+	return m_root;
+}
+
 bool Mcts::goDown(SP<Node> node, Field &field, std::vector<IntMoves>& path) {
 	if (node == nullptr) return false;
 
@@ -27,6 +35,10 @@ bool Mcts::goDown(SP<Node> node, Field &field, std::vector<IntMoves>& path) {
 	if (next == node->m_next.end()) return false;
 
 	return goDown(next->second, field, path);
+}
+
+bool Mcts::goDown(Field & field, std::vector<IntMoves>& path) {
+	return goDown(m_root, field, path);
 }
 
 void Mcts::backup(const std::vector<IntMoves>& path, double v, const PolicyPair & policyPair, bool expands) {

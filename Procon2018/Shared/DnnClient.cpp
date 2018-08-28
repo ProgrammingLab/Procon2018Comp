@@ -64,7 +64,9 @@ std::vector<double> DnnClient::Evaluate(const std::vector<Field>& field, std::ve
 		int size = toInt( asio::buffer_cast<const char*>(signBuffer.data()) );
 		asio::streambuf bodyBuffer;
 		asio::read(m_socket, bodyBuffer, asio::transfer_exactly(size));
-		std::stringstream jsonData(asio::buffer_cast<const char*>(bodyBuffer.data()));
+		std::string bodyStr = std::string(asio::buffer_cast<const char*>(bodyBuffer.data()));
+		bodyStr.resize(size); // ごみデータが入ることがあるので切り詰める
+		std::stringstream jsonData(bodyStr);
 		ptree received;
 		read_json(jsonData, received);
 

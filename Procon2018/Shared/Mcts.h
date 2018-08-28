@@ -21,11 +21,17 @@ public:
 	
 	~Mcts();
 
+	Field copyRootState() const;
+
+	SP<Node> root() const;
+
 	// fieldは変更され, 最終的に, 評価が必要な盤面になる
 	// pathに, 後のbackupで使う経路が根から順に入る
 	// return: fieldがゲーム終了状態ならtrue
 	// nodeがnullなら何もしない
 	bool goDown(SP<Node> node, Field &field, std::vector<IntMoves> &path);
+
+	bool goDown(Field &field, std::vector<IntMoves> &path);
 
 	// 評価結果vをバックアップ
 	// expands: 下端のノードを展開するか (fieldがゲーム終了状態になる経路なら, 絶対に展開しないべき)
