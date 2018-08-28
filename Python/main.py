@@ -405,7 +405,7 @@ class Dnn:
             units=1,
             kernel_initializer=Dnn.xavier_initializer(n2),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        return tf.nn.tanh(dense1[0])
+        return tf.nn.tanh(tf.reshape(dense1, [-1]))
     @staticmethod
     def adjust_to_dnn(states):
         cases = len(states)
@@ -628,7 +628,7 @@ def mysend(socket, msg):
         if sent == 0:
             raise RuntimeError("connection broken")
         totalsent = totalsent + sent
-    print('totalsent: ' + str(totalsent))
+    # print('totalsent: ' + str(totalsent))
 
 def toStates(json):
     res = []

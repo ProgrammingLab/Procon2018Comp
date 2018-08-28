@@ -25,6 +25,8 @@ public:
 
 	SP<Node> root() const;
 
+	bool isEnd() const;
+
 	// fieldは変更され, 最終的に, 評価が必要な盤面になる
 	// pathに, 後のbackupで使う経路が根から順に入る
 	// return: fieldがゲーム終了状態ならtrue

@@ -20,6 +20,10 @@ SP<Node> Mcts::root() const {
 	return m_root;
 }
 
+bool Mcts::isEnd() const {
+	return m_rootState.isEnd();
+}
+
 bool Mcts::goDown(SP<Node> node, Field &field, std::vector<IntMoves>& path) {
 	if (node == nullptr) return false;
 
@@ -82,7 +86,7 @@ bool Mcts::selfNext(double temperature, SP<DnnClient> dnn) {
 	IntMoves intMoves = Node::ToInt(movePair);
 	m_rootState.forward(movePair.first, movePair.second);
 
-	if (m_rootState.resTurn() == 0) { // ゲーム終了
+	if (m_rootState.isEnd()) { // ゲーム終了
 		m_root = nullptr;
 		return true;
 	}

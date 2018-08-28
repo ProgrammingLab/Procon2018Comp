@@ -59,7 +59,7 @@ Field Field::RandomState() {
 	}
 
 	//debug output
-	for (int i = 0; i < h; i++) {
+	/*for (int i = 0; i < h; i++) {
 		for (int j = 0; j < w; j++) {
 			if (fld[i][j].score >= 0) std::cout << " ";
 			std::cout << fld[i][j].score << " ";
@@ -73,7 +73,7 @@ Field Field::RandomState() {
 		}
 		std::cout << std::endl;
 	}
-	std::cout << std::endl << std::endl;
+	std::cout << std::endl << std::endl;*/
 
 	//ここまでは列方向の対称しか考えていないので、1/2の確率で転置
 	if (Rand::Next(2)) {
@@ -97,16 +97,11 @@ Field Field::RandomState() {
 }
 
 Field::Field()
-: m_resTurn(1000000)
-, m_w(12)
-, m_h(12)
+: m_resTurn(0)
+, m_w(0)
+, m_h(0)
 , m_field()
-, m_agent{ {1, 1}, {11, 11}, {11, 1}, {1, 11} } {
-	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
-		m_field[y][x].score = Rand::Next(-16, 16 + 1);
-		if (Rand::Next(2)) m_field[y][x].color = std::make_optional((PlayerId)Rand::Next(2));
-	}
-}
+, m_agent{} {}
 
 Field::Field(int resTurn, int h, int w, const std::vector<std::vector<Grid>>& field, const std::array<Point, 4>& agent)
 : m_resTurn(resTurn)
@@ -134,6 +129,10 @@ int Field::w() const {
 
 int Field::h() const {
 	return m_h;
+}
+
+bool Field::isEnd() const {
+	return m_resTurn == 0;
 }
 
 const Grid& Field::grid(const Point &pos) const {

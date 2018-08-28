@@ -9,6 +9,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/asio.hpp>
+#include <omp.h>
 
 #include "../Procon2018/Shared/Field.h"
 #include "../Procon2018/Shared/DnnClient.h"
@@ -16,8 +17,112 @@
 
 using namespace Procon2018;
 
-void SelfPlay() {
+void SelfPlay(int gameCount, std::string outputDir) {
+	SP<DnnClient> dnn(new DnnClient("127.0.0.1", 54215));
+	std::vector<Mcts> trees;
+	for (int i = 0; i < gameCount; i++) {
+		trees.push_back(Mcts(Field::RandomState(), dnn));
+	}
+
+	struct Log {
+		Field field;
+		double q;
+		VisitCount visitCount;
+		Log(const Field &field, double q, const VisitCount &visitCount)
+			: field(field)
+			, q(q)
+			, visitCount(visitCount) {}
+	};
+	std::vector<std::vector<Log>> logs(gameCount);
+
+	int globalTurn = 0;
+	while (true) {
+		std::cout << "turn: " << globalTurn << std::endl;
+		std::vector<std::pair<int, Mcts&>> tp;
+		for (int i = 0; i < gameCount; i++) {
+			if (!trees[i].isEnd()) tp.push_back(std::pair<int, Mcts&>(i, trees[i]));
+		}
+		int n = (int)tp.size();
+		if (n == 0) break;
+
+		std::vector<std::vector<IntMoves>> paths(n);
+		std::vector<bool> expands(n);
+		std::vector<Field> states(n);
+
+		std::vector<PolicyPair> policies(n);
+		std::vector<double> values;
+		for (int simCount = 0; simCount < 1000; simCount++) {
+			std::cout << ".";
+			if (simCount%100 == 99) std::cout << std::endl;
+			paths.clear();
+			paths.resize(n);
+#pragma omp parallel
+			{
+#pragma omp for
+				for (int i = 0; i < n; i++) {
+					states[i] = tp[i].second.copyRootState();
+					expands[i] = !tp[i].second.goDown(states[i], paths[i]);
+				}
+#pragma omp single
+				{
+					values = dnn->Evaluate(states, policies);
+				}
+#pragma omp for
+				for (int i = 0; i < n; i++) {
+					tp[i].second.backup(paths[i], values[i], policies[i], expands[i]);
+				}
+			}
+		}
+
+		for (int i = 0; i < n; i++) {
+			double q = 0;
+			SP<Node> node = tp[i].second.root();
+			for (int j = 0; j < 2; j++) {
+				for (int k = 0; k < PlayerMove::IntCount(); k++) {
+					q += node->m_w[j][k];
+				}
+				q /= tp[i].second.root()->m_countSum;
+			}
+			logs[tp[i].first].push_back(Log(tp[i].second.copyRootState(), q, node->m_count));
+
+			tp[i].second.selfNext(0, dnn);
+		}
+		globalTurn++;
+	}
 	
+	using namespace boost::property_tree;
+	for (int gameId = 0; gameId < gameCount; gameId++) {
+		Field state = trees[gameId].copyRootState();
+		double z = 0.0;
+		auto gameRes = state.calcScore();
+		if (gameRes.first > gameRes.second) z = +1.0;
+		if (gameRes.first < gameRes.second) z = -1.0;
+		
+		for (int turn = 0; turn < (int)logs[gameId].size(); turn++) {
+			ptree pt;
+			pt.add_child("state", state.toPTree());
+			pt.put("q", std::to_string(logs[gameId][turn].q));
+			pt.put("q", std::to_string(z));
+			{
+				ptree visitCount;
+				for (int i = 0; i < 2; i++) {
+					ptree child;
+					for (int j = 0; j < PlayerMove::IntCount(); j++) {
+						ptree unit;
+						unit.put("", std::to_string(logs[gameId][turn].visitCount[i][j]));
+						child.push_back(std::make_pair("", unit));
+					}
+					visitCount.push_back(std::make_pair("", child));
+				}
+				pt.add_child("visitCount", visitCount);
+			}
+			std::string fileName = "";
+			fileName += "gameId=" + std::to_string(gameId);
+			fileName += "_turn=" + std::to_string(turn);
+			fileName += ".json";
+			write_json(outputDir + fileName, pt);
+		}
+	}
 }
 
 void MctsTest() {
@@ -78,7 +183,8 @@ void MctsTest() {
 
 int main()
 {
-	MctsTest();
+	SelfPlay(2, "./step=0/");
+
 	/*
 	Field field = Field::RandomState();
 	SP<DnnClient> dnn;

@@ -8,6 +8,7 @@ namespace Procon2018 {
 using IntMoves = int;
 using Policy = std::array<double, PlayerMove::IntCount()>;
 using PolicyPair = std::array<Policy, 2>; //2プレイヤー分の方策
+using VisitCount = std::array<std::array<int, PlayerMove::IntCount()>, 2>;
 
 
 class Node {
@@ -15,7 +16,7 @@ public: // 強引なpublicは天才プログラマの特権 #アゲてこうぜ 
 
 	std::array<std::array<double, PlayerMove::IntCount()>, 2> m_w;
 	
-	std::array<std::array<int, PlayerMove::IntCount()>, 2> m_count;
+	VisitCount m_count;
 	
 	int m_countSum;
 	

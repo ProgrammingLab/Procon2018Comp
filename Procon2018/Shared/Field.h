@@ -102,6 +102,8 @@ public:
 	
 	int h() const;
 
+	bool isEnd() const;
+
 	const Grid& grid(const Point &pos) const;
 
 	const Point& playerPos(AgentId agentId) const;
