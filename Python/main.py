@@ -242,7 +242,6 @@ class Move:
 
 class Dnn:
     def __init__(self, model_path):
-        # TODO?: 過学習抑制
         self.is_training = tf.placeholder(tf.bool, shape=[])
         self.x = tf.placeholder(tf.float32, shape=[None, MAX_H, MAX_W, 8])
         self.policies0_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
@@ -270,7 +269,7 @@ class Dnn:
         self.policy1 = tf.nn.softmax(logits1)
         self.policy0_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies0_, logits=logits0)
         self.policy1_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies1_, logits=logits1)
-        self.loss = self.value_loss + self.policy0_loss + self.policy1_loss
+        self.loss = self.value_loss + self.policy0_loss + self.policy1_loss + 0.001*tf.losses.get_regularization_loss()
         self.optimizer = tf.train.GradientDescentOptimizer(1e-4)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -310,7 +309,8 @@ class Dnn:
             filters=64,
             kernel_size=[3,3],
             padding="same",
-            kernel_initializer=Dnn.he_initializer(n))
+            kernel_initializer=Dnn.he_initializer(n),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         bn = tf.layers.batch_normalization(
             conv,
             training=is_training)
@@ -327,7 +327,8 @@ class Dnn:
             filters=64,
             kernel_size=[3,3],
             padding="same",
-            kernel_initializer=Dnn.he_initializer(n0))
+            kernel_initializer=Dnn.he_initializer(n0),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         bn1 = tf.layers.batch_normalization(
             conv0,
             training=is_training)
@@ -339,7 +340,8 @@ class Dnn:
             filters=64,
             kernel_size=[3,3],
             padding="same",
-            kernel_initializer=Dnn.he_initializer(n1))
+            kernel_initializer=Dnn.he_initializer(n1),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         return tf.add(conv1, input_layer)
     # tensorflowの関数の関係上、softmaxまでせずに返す
     @staticmethod
@@ -355,7 +357,8 @@ class Dnn:
             filters=2,
             kernel_size=[1,1],
             padding="same",
-            kernel_initializer=Dnn.he_initializer(n0))
+            kernel_initializer=Dnn.he_initializer(n0),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         bn = tf.layers.batch_normalization(
             conv,
             training=is_training)
@@ -366,11 +369,13 @@ class Dnn:
         logits0 = tf.layers.dense(
             relu_flat,
             units=Move.max_int(),
-            kernel_initializer=Dnn.xavier_initializer(n1))
+            kernel_initializer=Dnn.xavier_initializer(n1),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         logits1 = tf.layers.dense(
             relu_flat,
             units=Move.max_int(),
-            kernel_initializer=Dnn.xavier_initializer(n1))
+            kernel_initializer=Dnn.xavier_initializer(n1),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         return (logits0, logits1)
     @staticmethod
     def value_out(input_layer, is_training):
@@ -381,7 +386,8 @@ class Dnn:
             filters=1,
             kernel_size=[1,1],
             padding="same",
-            kernel_initializer=Dnn.he_initializer(n0))
+            kernel_initializer=Dnn.he_initializer(n0),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         bn = tf.layers.batch_normalization(
             conv,
             training=is_training)
@@ -391,12 +397,14 @@ class Dnn:
         dense0 = tf.layers.dense(
             relu_flat,
             units=64,
-            kernel_initializer=Dnn.he_initializer(n1))
+            kernel_initializer=Dnn.he_initializer(n1),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         n2 = 64
         dense1 = tf.layers.dense(
             dense0,
             units=1,
-            kernel_initializer=Dnn.xavier_initializer(n2))
+            kernel_initializer=Dnn.xavier_initializer(n2),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         return tf.nn.tanh(dense1[0])
     @staticmethod
     def adjust_to_dnn(states):
