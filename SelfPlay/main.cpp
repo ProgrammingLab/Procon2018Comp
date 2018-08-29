@@ -37,6 +37,9 @@ void SelfPlay(int gameCount, std::string outputDir) {
 
 	int globalTurn = 0;
 	while (true) {
+		auto start0 = std::chrono::system_clock::now();
+		double t0 = 0, t1 = 0;
+
 		std::cout << "turn: " << globalTurn << std::endl;
 		std::vector<std::pair<int, Mcts&>> tp;
 		for (int i = 0; i < gameCount; i++) {
@@ -65,7 +68,10 @@ void SelfPlay(int gameCount, std::string outputDir) {
 				}
 #pragma omp single
 				{
+					auto start1 = std::chrono::system_clock::now();
 					values = dnn->Evaluate(states, policies);
+					auto end1 = std::chrono::system_clock::now();
+					t1 += std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
 				}
 #pragma omp for
 				for (int i = 0; i < n; i++) {
@@ -73,6 +79,10 @@ void SelfPlay(int gameCount, std::string outputDir) {
 				}
 			}
 		}
+
+		auto end0 = std::chrono::system_clock::now();
+		t0 = std::chrono::duration_cast<std::chrono::microseconds>(end0 - start0).count();
+		std::cout << t0/1e6 << ", " << t1/1e6 << std::endl;
 
 		for (int i = 0; i < n; i++) {
 			double q = 0;
@@ -183,7 +193,7 @@ void MctsTest() {
 
 int main()
 {
-	SelfPlay(2, "./step=0/");
+	SelfPlay(10, "./step=0/");
 
 	/*
 	Field field = Field::RandomState();
