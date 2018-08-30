@@ -19,6 +19,13 @@
 using namespace Procon2018;
 
 
+std::string ToStr(double d) {
+	std::stringstream ss;
+	ss << std::setprecision(16) << d;
+	return ss.str();
+}
+
+
 bool CheckFolder(const std::string folderName) {
 	if( _mkdir( folderName.c_str() ) == 0 ){
 		return true;
@@ -27,7 +34,7 @@ bool CheckFolder(const std::string folderName) {
 	}
 }
 
-void SelfPlay(int gameCount, std::string outputDir) {
+void SelfPlay(int gameCount, std::string outputIp, unsigned short outputPort) {
 	SP<DnnClient> dnn(new DnnClient("127.0.0.1", 54215));
 	std::vector<Mcts> trees;
 	for (int i = 0; i < gameCount; i++) {
@@ -108,30 +115,34 @@ void SelfPlay(int gameCount, std::string outputDir) {
 		if (gameRes.first > gameRes.second) z = +1.0;
 		if (gameRes.first < gameRes.second) z = -1.0;
 
-		std::string dir = outputDir + "/gameId=" + std::to_string(gameId);
-		CheckFolder(dir);
-
+		ptree pt;
+		ptree data;
 		for (int turn = 0; turn < (int)logs[gameId].size(); turn++) {
-			ptree pt;
-			pt.add_child("state", state.toPTree());
-			pt.put("q", std::to_string(logs[gameId][turn].q));
-			pt.put("z", std::to_string(z));
+			ptree childData;
+			childData.add_child("state", state.toPTree());
+			childData.put("q", ToStr(logs[gameId][turn].q));
+			childData.put("z", ToStr(z));
 			{
 				ptree visitCount;
 				for (int i = 0; i < 2; i++) {
 					ptree child;
 					for (int j = 0; j < PlayerMove::IntCount(); j++) {
 						ptree unit;
-						unit.put("", std::to_string(logs[gameId][turn].visitCount[i][j]));
+						unit.put("", ToStr(logs[gameId][turn].visitCount[i][j]));
 						child.push_back(std::make_pair("", unit));
 					}
 					visitCount.push_back(std::make_pair("", child));
 				}
-				pt.add_child("visitCount", visitCount);
+				childData.add_child("visitCount", visitCount);
 			}
-			std::string fileName = std::to_string(turn) + ".json";
-			write_json(dir + "/" + fileName, pt);
+			data.push_back(std::make_pair("", childData));
 		}
+		pt.add_child("data", data);
+
+		namespace asio = boost::asio;
+		using asio::ip::tcp;
+
+		asio::io_service ios()
 	}
 }
 

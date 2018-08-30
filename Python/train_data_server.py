@@ -1,35 +1,36 @@
 # coding: utf-8
 
 from library import *
-import sys
 import os
 import socket
-import json
-import collections
 
-def to_states(json):
-    res = []
-    n = len(json['states'])
-    for state_id in range(n):
-        state_json = json['states'][state_id]
-        res.append(to_state(state_json))
-    return res
+def data_server(output_dir):
+    game_id = 0
+    while True:
+        if not os.path.isdir(output_dir + '/' + str(game_id)):
+            break
+        game_id += 1
 
-
-def dnn_server(model_path):
-    dnn = Dnn(model_path)
-    
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('localhost', 54215))
+    server_socket.bind(('', 54216))
     server_socket.listen(1)
     print('started server')
     while True:
         (client_socket, address) = server_socket.accept()
-        while True:
-            receive_size = int(myreceive(client_socket, 10).decode('ascii'))
-            # print(size)
-            receive_body = json.loads(myreceive(client_socket, receive_size).decode('utf-8'))
-            states = to_states(receive_body)
+        receive_size = int(myreceive(client_socket, 10).decode('ascii'))
+        # print(size)
+        receive_body = json.loads(myreceive(client_socket, receive_size).decode('utf-8'))
+        ts = to_train_data(receive_body)
+
+        folder_path = output_dir + '/' + str(game_id)
+        os.makedirs(folder_path)
+
+        for i in range(len(ts)):
+
+
+
+
+
 
             # debug output
             # for state in states:
@@ -88,28 +89,3 @@ def dnn_server(model_path):
             # print()
             # for p in result['policy_pair'][1]:
             #     print(p)
-
-
-# ベンチマーク的な
-def benchmark(model_path):
-    score = [
-        [0, 0, 1, 0, 0],
-        [0,-2, 1,-2, 0],
-        [0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0]
-    ]
-    color = [
-        [1, 1, 0, 0, 1],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [2, 0, 0, 0, 2]
-    ]
-    fld = [[Grid(score[i][j], color[i][j]) for j in range(5)] for i in range(4)]
-    agent_pos = [[Pos(0, 0), Pos(4, 0)], [Pos(0, 3), Pos(4, 3)]]
-    state = State(np.array(fld), agent_pos, 2)
-    dnn = Dnn(model_path)
-    mcts = MCTS(state, dnn)
-    mcts.test()
-
-
-dnn_server('./model/step=0.ckpt')

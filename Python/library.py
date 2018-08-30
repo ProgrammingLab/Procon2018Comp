@@ -5,6 +5,8 @@ import tensorflow as tf
 import math
 import copy
 import random
+import json
+import socket
 
 dx8 = [1, 0, -1, -1, -1, 0, 1, 1]
 dy8 = [1, 1, 1, 0, -1, -1, -1, 0]
@@ -573,3 +575,53 @@ class MCTS:
 
 MAX_H = 12
 MAX_W = 12
+
+def to_state(state_json):
+    res_turn = int(state_json['resTurn'])
+    h = int(state_json['h'])
+    w = int(state_json['w'])
+
+    score = state_json['score']
+    color = state_json['color']
+    pos = state_json['pos']
+
+    fld = [[Grid(0, 0) for j in range(w)] for i in range(h)]
+    agent_pos = [[Pos(-1, -1) for j in range(2)] for i in range(2)]
+    for i in range(h):
+        for j in range(w):
+            fld[i][j].score = int(score[i][j])
+            fld[i][j].color = int(color[i][j])
+    for i in range(2):
+        for j in range(2):
+            agent_pos[i][j].x = int(pos[i*2 + j]['x'])
+            agent_pos[i][j].y = int(pos[i*2 + j]['y'])
+
+    return State(np.array(fld), agent_pos, res_turn)
+
+    
+class TrainingData:
+    def __init__(self, state, visit_counts, q, z):
+        self.state = state
+        self.visit_counts = visit_counts
+        self.q = q
+        self.z = z
+
+def myreceive(socket, byte_size):
+    chunks = []
+    cnt = byte_size
+    while cnt > 0:
+        chunk = socket.recv(cnt)
+        if chunk == b'':
+            raise RuntimeError("connection broken")
+        chunks.append(chunk)
+        cnt -= len(chunk)
+    return b''.join(chunks)
+
+def mysend(socket, msg):
+    totalsent = 0
+    while totalsent < len(msg):
+        sent = socket.send(msg[totalsent:])
+        if sent == 0:
+            raise RuntimeError("connection broken")
+        totalsent = totalsent + sent
+    # print('totalsent: ' + str(totalsent))
