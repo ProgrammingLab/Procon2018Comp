@@ -5,6 +5,7 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <direct.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
@@ -16,6 +17,15 @@
 #include "../Procon2018/Shared/Mcts.h"
 
 using namespace Procon2018;
+
+
+bool CheckFolder(const std::string folderName) {
+	if( _mkdir( folderName.c_str() ) == 0 ){
+		return true;
+	} else {
+		return false;
+	}
+}
 
 void SelfPlay(int gameCount, std::string outputDir) {
 	SP<DnnClient> dnn(new DnnClient("127.0.0.1", 54215));
@@ -89,7 +99,7 @@ void SelfPlay(int gameCount, std::string outputDir) {
 		}
 		globalTurn++;
 	}
-	
+
 	using namespace boost::property_tree;
 	for (int gameId = 0; gameId < gameCount; gameId++) {
 		Field state = trees[gameId].copyRootState();
@@ -97,12 +107,15 @@ void SelfPlay(int gameCount, std::string outputDir) {
 		auto gameRes = state.calcScore();
 		if (gameRes.first > gameRes.second) z = +1.0;
 		if (gameRes.first < gameRes.second) z = -1.0;
-		
+
+		std::string dir = outputDir + "/gameId=" + std::to_string(gameId);
+		CheckFolder(dir);
+
 		for (int turn = 0; turn < (int)logs[gameId].size(); turn++) {
 			ptree pt;
 			pt.add_child("state", state.toPTree());
 			pt.put("q", std::to_string(logs[gameId][turn].q));
-			pt.put("q", std::to_string(z));
+			pt.put("z", std::to_string(z));
 			{
 				ptree visitCount;
 				for (int i = 0; i < 2; i++) {
@@ -116,11 +129,8 @@ void SelfPlay(int gameCount, std::string outputDir) {
 				}
 				pt.add_child("visitCount", visitCount);
 			}
-			std::string fileName = "";
-			fileName += "gameId=" + std::to_string(gameId);
-			fileName += "_turn=" + std::to_string(turn);
-			fileName += ".json";
-			write_json(outputDir + fileName, pt);
+			std::string fileName = std::to_string(turn) + ".json";
+			write_json(dir + "/" + fileName, pt);
 		}
 	}
 }
@@ -128,15 +138,15 @@ void SelfPlay(int gameCount, std::string outputDir) {
 void MctsTest() {
 	int score[4][5] = {
 		{0, 0, 1, 0, 0},
-		{0,-2, 1,-2, 0},
-		{0, 0, 1, 0, 0},
-		{0, 0, 1, 0, 0}
+	{0,-2, 1,-2, 0},
+	{0, 0, 1, 0, 0},
+	{0, 0, 1, 0, 0}
 	};
 	int color[4][5] = {
 		{1, 1, 0, 0, 1},
-		{0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0},
-		{2, 0, 0, 0, 2}
+	{0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0},
+	{2, 0, 0, 0, 2}
 	};
 	std::vector<std::vector<Grid>> fld(4);
 	for (int i = 0; i < 4; i++) {
@@ -156,7 +166,7 @@ void MctsTest() {
 		Field state = mcts.copyRootState();
 		std::vector<IntMoves> path;
 		bool expands = !mcts.goDown(state, path);
-		
+
 		PolicyPair policyPair;
 		double v = dnn->Evaluate(state, policyPair);
 
@@ -166,47 +176,51 @@ void MctsTest() {
 	// debug output
 	/*SP<Node> root = mcts.root();
 	for (IntMove i = 0; i < PlayerMove::IntCount(); i++) {
-		auto show = [](const OptAction &a) {
-			if (!a) return std::string("..");
-			std::string ret = (a.value().type == ActionType::Move ? "m" : "r");
-			ret += std::to_string((int)a.value().dir);
-			return ret;
-		};
-		int p0 = root->m_count[0][(int)i];
-		int p1 = root->m_count[1][(int)i];
-		PlayerMove move = PlayerMove::FromInt(i);
-		std::cout << "(" + show(move.a0) + "," << show(move.a1) << ") : (" << p0 << "," << p1 << ")" << std::endl;
+	auto show = [](const OptAction &a) {
+	if (!a) return std::string("..");
+	std::string ret = (a.value().type == ActionType::Move ? "m" : "r");
+	ret += std::to_string((int)a.value().dir);
+	return ret;
+	};
+	int p0 = root->m_count[0][(int)i];
+	int p1 = root->m_count[1][(int)i];
+	PlayerMove move = PlayerMove::FromInt(i);
+	std::cout << "(" + show(move.a0) + "," << show(move.a1) << ") : (" << p0 << "," << p1 << ")" << std::endl;
 	}*/
 
 	mcts.selfNext(0, dnn);
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	SelfPlay(10, "./step=0/");
+	std::stringstream ss(argv[1]);
+	int gameCount;
+	ss >> gameCount;
+	CheckFolder(argv[2]);
+	SelfPlay(gameCount, argv[2]);
 
 	/*
 	Field field = Field::RandomState();
 	SP<DnnClient> dnn;
 	while (true) {
-		try {
-			dnn = SP<DnnClient>(new DnnClient("127.0.0.1", 54215));
-		}
-		catch (...) {
-			std::cout << "dnn initialize failed" << std::endl;
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-		}
-		break;
+	try {
+	dnn = SP<DnnClient>(new DnnClient("127.0.0.1", 54215));
+	}
+	catch (...) {
+	std::cout << "dnn initialize failed" << std::endl;
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+	break;
 	}
 	std::cout << "initialized dnn!" << std::endl;
 	PolicyPair res;
 	double v = dnn->Evaluate(field, res);
 	std::cout << v << std::endl;
 	for (int i = 0; i < res.size(); i++) {
-		for (int j = 0; j < res[i].size(); j++) {
-			std::cout << res[i][j] << " ";
-		}
-		std::cout << std::endl;
+	for (int j = 0; j < res[i].size(); j++) {
+	std::cout << res[i][j] << " ";
+	}
+	std::cout << std::endl;
 	}
 	// */
 
@@ -231,10 +245,10 @@ int main()
 	socket.connect(tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), 54215), error);
 
 	if (error) {
-		std::cout << "connect failed : " << error.message() << std::endl;
+	std::cout << "connect failed : " << error.message() << std::endl;
 	}
 	else {
-		std::cout << "connected" << std::endl;
+	std::cout << "connected" << std::endl;
 	}
 
 	using namespace boost::property_tree;
@@ -256,5 +270,5 @@ int main()
 	pt.put("Ho.Ge", u8"ほげ"); //文字化けするよ
 	write_json("out.json", pt);
 	// */
-    return 0;
+	return 0;
 }

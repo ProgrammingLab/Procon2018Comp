@@ -5,12 +5,6 @@ import tensorflow as tf
 import math
 import copy
 import random
-import sys
-import pickle
-import os
-import socket
-import json
-import collections
 
 dx8 = [1, 0, -1, -1, -1, 0, 1, 1]
 dy8 = [1, 1, 1, 0, -1, -1, -1, 0]
@@ -28,6 +22,8 @@ class Pos:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+    def equals(self, p):
+        return self.x == p.x and self.y == p.y
 
 class State:
     def __init__(self, fld, agent_pos, res_turn):
@@ -92,23 +88,34 @@ class State:
                 for j in range(2):
                     pos[i][j].x, pos[i][j].y = pos[i][j].y, pos[i][j].x
         
-        # for i in range(h):
-        #     for j in range(w):
-        #         if fld[i][j].score >= 0:
-        #             print(" ", end="")
-        #         print(fld[i][j].score, end=" ")
-        #     print()
-        # print("------------------------------------------")
-        # for i in range(h):
-        #     for j in range(w):
-        #         print(fld[i][j].color, end=" ")
-        #     print()
-        # print()
-        # print()
-        # print()
-        
         # return State(fld, pos, 2)
         return State(fld, pos, np.random.randint(60, 120 + 1))
+    
+    def print(self):
+        print('=================================================')
+        for i in range(self.h()):
+            for j in range(self.w()):
+                print('{:>3}'.format(self.fld[i][j].score), end='')
+            print()
+        print()
+        for i in range(self.h()):
+            for j in range(self.w()):
+                print('  ', end='')
+                p = Pos(j, i)
+                if p.equals(self.agent_pos[0][0]):
+                    print('A', end='')
+                elif p.equals(self.agent_pos[0][1]):
+                    print('a', end='')
+                elif p.equals(self.agent_pos[1][0]):
+                    print('B', end='')
+                elif p.equals(self.agent_pos[1][1]):
+                    print('b', end='')
+                elif self.fld[i][j].color == 0:
+                    print('.', end='')
+                else:
+                    print(self.fld[i][j].color - 1, end='')
+            print()
+        print('=================================================')
         
     @staticmethod
     def dfs(x, y, fld, res):
@@ -566,233 +573,3 @@ class MCTS:
 
 MAX_H = 12
 MAX_W = 12
-
-class TrainingData:
-    def __init__(self, state, visit_counts, q, z):
-        self.state = state
-        self.visit_counts = visit_counts
-        self.q = q
-        self.z = z
-
-def self_play(dnn, output_dir):
-    game_count = 0
-    while True:
-        state_list = []
-        visit_counts_list = []
-        q_list = []
-        mcts = MCTS(State.random_state(), dnn)
-        while mcts.first_state.res_turn > 0:
-            print(str(game_count) + '-' + str(mcts.first_state.res_turn))
-            try:
-                with open('stop.command', 'r'):
-                    print('command: stop!')
-                    return
-            except FileNotFoundError:
-                pass
-            state_list.append(copy.deepcopy(mcts.first_state))
-            q = mcts.search(1000)
-            visit_counts_list.append(copy.deepcopy(mcts.root.count))
-            q_list.append(q)
-            mcts.self_next(0)
-        z = mcts.first_state.evaluate_end()
-        for i in range(len(state_list)):
-            data = TrainingData(state_list[i], visit_counts_list[i], q_list[i], z)
-            path = output_dir
-            path += 'game=' + str(game_count) + '_turn=' + str(i)
-            path += '.TrainingData.pickle'
-            with open(path, 'wb') as f:
-                pickle.dump(data, f)
-        game_count += 1
-
-
-
-# =========================以下グローバル関数と実行部=======================
-# TODO: DNNに入れる盤面の回転・反転など（学習時）
-
-
-def myreceive(socket, byte_size):
-    chunks = []
-    cnt = byte_size
-    while cnt > 0:
-        chunk = socket.recv(cnt)
-        if chunk == b'':
-            raise RuntimeError("connection broken")
-        chunks.append(chunk)
-        cnt -= len(chunk)
-    return b''.join(chunks)
-
-def mysend(socket, msg):
-    totalsent = 0
-    while totalsent < len(msg):
-        sent = socket.send(msg[totalsent:])
-        if sent == 0:
-            raise RuntimeError("connection broken")
-        totalsent = totalsent + sent
-    # print('totalsent: ' + str(totalsent))
-
-def toStates(json):
-    res = []
-    n = len(json['states'])
-    for state_id in range(n):
-        state_json = json['states'][state_id]
-        res_turn = int(state_json['resTurn'])
-        h = int(state_json['h'])
-        w = int(state_json['w'])
-
-        score = state_json['score']
-        color = state_json['color']
-        pos = state_json['pos']
-
-        fld = [[Grid(0, 0) for j in range(w)] for i in range(h)]
-        agent_pos = [[Pos(-1, -1) for j in range(2)] for i in range(2)]
-        for i in range(h):
-            for j in range(w):
-                fld[i][j].score = int(score[i][j])
-                fld[i][j].color = int(color[i][j])
-        for i in range(2):
-            for j in range(2):
-                agent_pos[i][j].x = int(pos[i*2 + j]['x'])
-                agent_pos[i][j].y = int(pos[i*2 + j]['y'])
-
-        res.append(State(np.array(fld), agent_pos, res_turn))
-    return res
-
-
-
-# 自己対局
-def SelfPlay():
-    output_dir = sys.argv[1]
-    # TODO: DNNの読み込み
-    dnn = Dnn('./model/step=0.ckpt')
-    try:
-        os.makedirs(output_dir)
-    except FileExistsError:
-        pass
-    # import cProfile
-    # cProfile.run('self_play(dnn, output_dir)', 'profile.stats')
-    self_play(dnn, output_dir)
-
-
-def DnnServer(model_path):
-    dnn = Dnn(model_path)
-    
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('localhost', 54215))
-    server_socket.listen(1)
-    print('started server')
-    while True:
-        (client_socket, address) = server_socket.accept()
-        while True:
-            receive_size = int(myreceive(client_socket, 10).decode('ascii'))
-            # print(size)
-            receive_body = json.loads(myreceive(client_socket, receive_size).decode('utf-8'))
-            states = toStates(receive_body)
-
-            # debug output
-            # for state in states:
-            #     print('resTurn: ' + str(state.res_turn))
-            #     for i in range(state.h()):
-            #         for j in range(state.w()):
-            #             print(state.fld[i][j].score, end=' ')
-            #         print()
-            #     print()
-            #     for i in range(state.h()):
-            #         for j in range(state.w()):
-            #             print(state.fld[i][j].color, end=' ')
-            #         print()
-            #     print()
-            #     for i in range(2):
-            #         for j in range(2):
-            #             x = state.agent_pos[i][j].x
-            #             y = state.agent_pos[i][j].y
-            #             print('(x: ' + str(x) + ', y: ' + str(y) + ')')
-            #     print()
-            #     print()
-            
-            r = dnn.calc_batch(states)
-            policy_data = r['policy_pair']
-            value = r['value']
-            n = len(states)
-
-            results = collections.OrderedDict()
-            results['result'] = []
-            for result_id in range(n):
-                policy = [[0.0 for j in range(Move.max_int())] for i in range(2)]
-                for i in range(2):
-                    for j in range(Move.max_int()):
-                        policy[i][j] = "{0:.16f}".format(policy_data[i][result_id][j])
-                
-                data = collections.OrderedDict()
-                data['value'] = "{0:.16f}".format(value[result_id])
-                data['policy'] = policy
-                results['result'].append(data)
-                
-            sent = json.dumps(results, indent=None).encode('ascii')
-            send_size_str = str(len(sent))
-            if len(send_size_str) > 10:
-                raise "too large"
-            while len(send_size_str) < 10:
-                send_size_str += ' '
-            # print(sent)
-            # print(send_size_str.encode('ascii'))
-            mysend(client_socket, send_size_str.encode('ascii'))
-            mysend(client_socket, sent)
-
-            # print(result['value'])
-            # print()
-            # for p in result['policy_pair'][0]:
-            #     print(p)
-            # print()
-            # for p in result['policy_pair'][1]:
-            #     print(p)
-
-# pickleテスト
-def PickelTest():
-    score = [
-        [0, 0, 1, 0, 0],
-        [0,-2, 1,-2, 0],
-        [0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0]
-    ]
-    color = [
-        [1, 1, 0, 0, 1],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [2, 0, 0, 0, 2]
-    ]
-    fld = [[Grid(score[i][j], color[i][j]) for j in range(5)] for i in range(4)]
-    agent_pos = [[Pos(0, 0), Pos(4, 0)], [Pos(0, 3), Pos(4, 3)]]
-    state = State(np.array(fld), agent_pos, 2)
-    import pickle
-    with open('test.pickle', mode='wb') as f:
-        pickle.dump(state, f)
-    with open('test.pickle', mode='rb') as f:
-        state_ = pickle.load(f)
-    for i in range(state_.h()):
-        for j in range(state_.w()):
-            print(state_.fld[i][j].score, end=" ")
-        print()
-
-# ベンチマーク的な
-def Benchmark(model_path):
-    score = [
-        [0, 0, 1, 0, 0],
-        [0,-2, 1,-2, 0],
-        [0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0]
-    ]
-    color = [
-        [1, 1, 0, 0, 1],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [2, 0, 0, 0, 2]
-    ]
-    fld = [[Grid(score[i][j], color[i][j]) for j in range(5)] for i in range(4)]
-    agent_pos = [[Pos(0, 0), Pos(4, 0)], [Pos(0, 3), Pos(4, 3)]]
-    state = State(np.array(fld), agent_pos, 2)
-    dnn = Dnn(model_path)
-    mcts = MCTS(state, dnn)
-    mcts.test()
-
-
-DnnServer('./model/step=0.ckpt')

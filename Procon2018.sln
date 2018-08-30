@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Procon2018", "Procon2018\Pr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SelfPlay", "SelfPlay\SelfPlay.vcxproj", "{90601A3F-FE80-4B74-951A-8CE05248292C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SelfPlay_win", "SelfPlay_win\SelfPlay_win.vcxproj", "{D9E73C06-3BAA-43BE-8204-217A8F2677EC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -39,6 +41,16 @@ Global
 		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|x64.Build.0 = Release|x64
 		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|x86.ActiveCfg = Release|x86
 		{90601A3F-FE80-4B74-951A-8CE05248292C}.Release|x86.Build.0 = Release|x86
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Debug|ARM.ActiveCfg = Debug|Win32
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Debug|x64.ActiveCfg = Debug|x64
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Debug|x64.Build.0 = Debug|x64
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Debug|x86.ActiveCfg = Debug|Win32
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Debug|x86.Build.0 = Debug|Win32
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Release|ARM.ActiveCfg = Release|Win32
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Release|x64.ActiveCfg = Release|x64
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Release|x64.Build.0 = Release|x64
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Release|x86.ActiveCfg = Release|Win32
+		{D9E73C06-3BAA-43BE-8204-217A8F2677EC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

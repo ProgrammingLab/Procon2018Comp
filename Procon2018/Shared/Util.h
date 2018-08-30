@@ -8,6 +8,8 @@
 #define BOOST_SYSTEM_NO_LIB
 #define BOOST_SYSTEM_NO_DEPRECATED
 
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS //WARUI_DEFINE
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
