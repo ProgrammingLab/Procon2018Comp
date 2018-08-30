@@ -135,6 +135,10 @@ bool Field::isEnd() const {
 	return m_resTurn == 0;
 }
 
+void Field::setResTurn(int resTurn) {
+	m_resTurn = resTurn;
+}
+
 const Grid& Field::grid(const Point &pos) const {
 	return m_field[pos.y][pos.x];
 }

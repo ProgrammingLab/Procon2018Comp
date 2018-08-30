@@ -69,7 +69,7 @@ private:
 
 public:
 
-	void InitializeWithTime();
+	static void InitializeWithTime();
 
 	// [start, end)
 	static int Next(int start, int end);

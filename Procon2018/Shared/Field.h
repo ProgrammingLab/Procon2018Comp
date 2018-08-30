@@ -104,6 +104,8 @@ public:
 
 	bool isEnd() const;
 
+	void setResTurn(int resTurn);
+
 	const Grid& grid(const Point &pos) const;
 
 	const Point& playerPos(AgentId agentId) const;
