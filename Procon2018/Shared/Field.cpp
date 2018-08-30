@@ -327,7 +327,7 @@ boost::property_tree::ptree Field::toPTree() const {
 			ptree row;
 			for (int j = 0; j < m_w; j++) {
 				std::optional<PlayerId> c = m_field[i][j].color;
-				std::string s = (c ? (c.value() == PlayerId::A ? "1" : "2") : "0");
+				std::string s = (c ? ((c.value() == PlayerId::A) ? "1" : "2") : "0");
 				ptree unit;
 				unit.put("", s);
 				row.push_back(std::make_pair("", unit));
