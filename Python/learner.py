@@ -1,11 +1,15 @@
 # coding: utf-8
 
 from library import *
+import sys
+import os
+import json
+import numpy as np
 
 def to_train_data(json):
     state = to_state(json['state'])
-    q = int(json['q'])
-    z = int(json['z'])
+    q = float(json['q'])
+    z = float(json['z'])
     visit_counts = [[0.0 for j in range(Move.max_int())] for i in range(2)]
     for i in range(2):
         for j in range(Move.max_int()):
@@ -28,7 +32,7 @@ def rot90(state):
 
 def shuffle_state(train_data):
     if np.random.randint(2) == 0: # 反転
-        train_data.state.fld.transpose()
+        train_data.state.fld = train_data.state.fld.transpose()
         for i in range(2):
             for j in range(2):
                 x = train_data.state.agent_pos[i][j].x
@@ -66,3 +70,59 @@ def shuffle_state(train_data):
             for m in range(Move.max_int()):
                 v[swap_action(m)] = train_data.visit_counts[i][m]
             train_data.visit_counts[i] = v
+
+for i in range(111):
+    print(i)
+    with open('./training_data/89/' + str(i) + '.json') as f:
+        to_train_data(json.load(f)).state.print()
+
+# train_data_list = []
+# train_data_path = sys.argv[1]
+# game_count = 0
+# while True:
+#     game_path = train_data_path + '/' + str(game_count)
+#     if not os.path.isdir(game_path):
+#         break
+#     game_count += 1
+# for game_id in range(game_count):
+#     turn_id = 0
+#     game_path = train_data_path + '/' + str(game_id)
+#     while True:
+#         turn_path = game_path + '/' + str(turn_id) + '.json'
+#         if not os.path.exists(turn_path):
+#             break
+#         with open(turn_path) as f:
+#             data = to_train_data(json.load(f))
+#             data.name = turn_path
+#             train_data_list.append(data)
+#         turn_id += 1
+#     game_id += 1
+#     print('loaded ' + str(game_id) + '/' + str(game_count))
+
+# print(str(len(train_data_list)) + ' train data is here!')
+# dnn = Dnn(None)
+# for train_count in range(1000):
+#     print('trainStep: ' + str(train_count))
+#     batch = np.random.choice(train_data_list, 512, replace=False)
+#     states = []
+#     policies = []
+#     values = []
+#     for b in batch:
+#         shuffle_state(b)
+#         count_sum = [0, 0]
+#         for i in range(2):
+#             for j in range(Move.max_int()):
+#                 count_sum[i] += b.visit_counts[i][j]
+#         policy = [[0.0 for j in range(Move.max_int())] for i in range(2)]
+#         for i in range(2):
+#             for j in range(Move.max_int()):
+#                 policy[i][j] = b.visit_counts[i][j]/count_sum[i]
+
+#         states.append(b.state)
+#         policies.append(policy)
+#         values.append((b.q + b.z)/2)
+#     print('len(states): ' + str(len(states)))
+#     for i in range(len(batch)):
+#         print(str(i) + ': ' + batch[i].name)
+#     dnn.train(states, policies, values)
+# dnn.save('./model/test.ckpt')

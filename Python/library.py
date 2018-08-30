@@ -278,15 +278,17 @@ class Dnn:
         self.policy1 = tf.nn.softmax(logits1)
         self.policy0_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies0_, logits=logits0)
         self.policy1_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies1_, logits=logits1)
-        self.loss = self.value_loss + self.policy0_loss + self.policy1_loss + 0.001*tf.losses.get_regularization_loss()
-        self.optimizer = tf.train.GradientDescentOptimizer(1e-4)
+        self.policy_loss = self.policy0_loss + self.policy1_loss
+        self.regularization_loss = 0.001*tf.losses.get_regularization_loss()
+        self.loss = self.value_loss + self.policy_loss + self.regularization_loss
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             self.train_op = self.optimizer.minimize(self.loss)
+        
 
         config = tf.ConfigProto(
-            device_count={"GPU":1},
             log_device_placement=False,
             gpu_options=tf.GPUOptions(
                 #per_process_gpu_memory_fraction=0.1
@@ -294,15 +296,32 @@ class Dnn:
         )
 
         self.sess = tf.Session(config=config)
-        # with tf.name_scope('summary'):
-        #     writer = tf.summary.FileWriter('./logs', self.sess.graph)
+        with tf.name_scope('summary'):
+            tf.summary.scalar('loss', self.loss)
+            tf.summary.scalar('valueLoss', self.value_loss)
+            tf.summary.scalar('policyLoss', self.policy_loss)
+            tf.summary.scalar('regularizationLoss', self.regularization_loss)
+            self.log_writer = tf.summary.FileWriter('./logs', self.sess.graph)
         if model_path:
             tf.train.Saver().restore(self.sess, model_path)
         else:
             self.sess.run(tf.global_variables_initializer())
+    
     def save(self, path):
         saver = tf.train.Saver()
         saver.save(self.sess, path)
+    
+    def train(self, states, policy_pairs, values):
+        x = Dnn.adjust_to_dnn(states)
+        feed_dict = {
+            self.x: x,
+            self.policies0_: policy_pairs[0],
+            self.policies1_: policy_pairs[1],
+            self.values: values,
+            self.is_training: True
+        }
+        self.train_op.run(feed_dict=feed_dict)
+
     @staticmethod
     def he_initializer(n):
         return tf.initializers.truncated_normal(stddev=math.sqrt(2.0/n))
@@ -439,9 +458,21 @@ class Dnn:
             p01 = state.agent_pos[0][1]
             p10 = state.agent_pos[1][0]
             p11 = state.agent_pos[1][1]
+            if o_r + p00.y >= 12 or o_c + p00.x >= 12:
+                print('case_id: ' + str(case_id))
+                state.print()
             x[case_id][o_r + p00.y][o_c + p00.x][4] = 1.0
+            if o_r + p01.y >= 12 or o_c + p01.x >= 12:
+                print('case_id: ' + str(case_id))
+                state.print()
             x[case_id][o_r + p01.y][o_c + p01.x][5] = 1.0
+            if o_r + p10.y >= 12 or o_c + p10.x >= 12:
+                print('case_id: ' + str(case_id))
+                state.print()
             x[case_id][o_r + p10.y][o_c + p10.x][6] = 1.0
+            if o_r + p11.y >= 12 or o_c + p11.x >= 12:
+                print('case_id: ' + str(case_id))
+                state.print()
             x[case_id][o_r + p11.y][o_c + p11.x][7] = 1.0
         return x
     # return: {'policy_pair': (Move, Move), 'value': float}
