@@ -110,9 +110,9 @@ void SelfPlay(int gameCount, std::string outputIp) {
 
 	using namespace boost::property_tree;
 	for (int gameId = 0; gameId < gameCount; gameId++) {
-		Field state = trees[gameId].copyRootState();
+		Field endState = trees[gameId].copyRootState();
 		double z = 0.0;
-		auto gameRes = state.calcScore();
+		auto gameRes = endState.calcScore();
 		if (gameRes.first > gameRes.second) z = +1.0;
 		if (gameRes.first < gameRes.second) z = -1.0;
 
@@ -120,7 +120,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 		ptree data;
 		for (int turn = 0; turn < (int)logs[gameId].size(); turn++) {
 			ptree childData;
-			childData.add_child("state", state.toPTree());
+			childData.add_child("state", logs[gameId][turn].field.toPTree());
 			childData.put("q", ToStr(logs[gameId][turn].q));
 			childData.put("z", ToStr(z));
 			{
