@@ -34,11 +34,12 @@ bool CheckFolder(const std::string folderName) {
 	}
 }
 
-void SelfPlay(int gameCount, std::string outputIp, unsigned short outputPort) {
+void SelfPlay(int gameCount, std::string outputIp) {
 	SP<DnnClient> dnn(new DnnClient("127.0.0.1", 54215));
 	std::vector<Mcts> trees;
 	for (int i = 0; i < gameCount; i++) {
-		trees.push_back(Mcts(Field::RandomState(), dnn));
+		Field s = Field::RandomState();
+		trees.push_back(Mcts(s, dnn));
 	}
 
 	struct Log {
@@ -115,7 +116,7 @@ void SelfPlay(int gameCount, std::string outputIp, unsigned short outputPort) {
 		if (gameRes.first > gameRes.second) z = +1.0;
 		if (gameRes.first < gameRes.second) z = -1.0;
 
-		ptree pt;
+		ptree sent;
 		ptree data;
 		for (int turn = 0; turn < (int)logs[gameId].size(); turn++) {
 			ptree childData;
@@ -137,13 +138,42 @@ void SelfPlay(int gameCount, std::string outputIp, unsigned short outputPort) {
 			}
 			data.push_back(std::make_pair("", childData));
 		}
-		pt.add_child("data", data);
+		sent.add_child("data", data);
 
 		namespace asio = boost::asio;
 		using asio::ip::tcp;
 
-		asio::io_service ios()
+		asio::io_service ioService;
+		tcp::socket socket(ioService);
+		while (true) {
+			boost::system::error_code error;
+			socket.connect(tcp::endpoint(asio::ip::address::from_string(outputIp), 54216), error);
+			if (error) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				continue;
+			}
+			break;
+		}
+		std::stringstream ss;
+		write_json(ss, sent);
+		std::string body = ss.str();
+		std::string sign = std::to_string(body.size()*sizeof(char));
+		if (sign.size() > 10) throw "too large";
+		while (sign.size() < 10) sign.push_back(' ');
+		while (true) {
+			try {
+				asio::write(socket, asio::buffer(sign)); //データの長さの10バイト文字列表現
+				asio::write(socket, asio::buffer(body)); //自動で全部送るらしい
+				break;
+			}
+			catch (...) {
+				continue;
+			}
+		}
+
+		std::cout << "sent gameId=" << gameId << std::endl; 
 	}
+	std::cout << "all sent!" << std::endl;
 }
 
 void MctsTest() {
@@ -204,10 +234,11 @@ void MctsTest() {
 
 int main(int argc, char* argv[])
 {
+	using namespace Procon2018;
+	Rand::InitializeWithTime();
 	std::stringstream ss(argv[1]);
 	int gameCount;
 	ss >> gameCount;
-	CheckFolder(argv[2]);
 	SelfPlay(gameCount, argv[2]);
 
 	/*
