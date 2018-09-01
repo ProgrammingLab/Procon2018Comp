@@ -671,4 +671,4 @@ def mysend_with_sign(sock, msg):
 # 先頭に10バイトの長さ情報を含んだプロトコル
 def myreceive_with_sign(sock):
     size = int(myreceive(sock, 10).decode('ascii'))
-    return myreceive(sock, size).decode('utf-8')
+    return myreceive(sock, size)

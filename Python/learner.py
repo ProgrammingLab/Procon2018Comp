@@ -93,13 +93,13 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
                 data.name = turn_path
                 train_data_list.append(data)
             turn_id += 1
+        sys.stdout.write('\rloaded %d/%d' % (game_id + 1, game_count))
         game_id += 1
-        print('loaded %d/%d' % (game_id + 1, game_count))
 
     print(str(len(train_data_list)) + ' train data is here!')
     dnn = Dnn(model_path, log_dir=log_dir)
     for train_count in range(1000):
-        sys.stdout.write('trainStep: %d' % train_count)
+        sys.stdout.write('\rtrainStep: %d' % train_count)
         batch = np.random.choice(train_data_list, 512, replace=False)
         states = []
         policies0 = []
@@ -144,7 +144,7 @@ def model_server(ckpt, model_dir, client_count, game_count):
         mysend_with_sign(client_socket, byte_header)
         for d in model_data:
             mysend_with_sign(client_socket, d)
-        print('sent model %d/%d' % (i + 1, client_count))
+        sys.stdout.write('\rsent model %d/%d' % (i + 1, client_count))
 
 def data_server(output_dir, all_game_count):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -161,7 +161,7 @@ def data_server(output_dir, all_game_count):
         for i in range(n):
             with open(folder_path + '/' + str(i) + '.json', 'w') as f:
                 json.dump(receive_body['data'][i], f, indent=None)
-        sys.stdout.write('received train data %d/%d' % (game_id + 1, all_game_count))
+        sys.stdout.write('\rreceived train data %d/%d' % (game_id + 1, all_game_count))
 
 
 parser = argparse.ArgumentParser()
@@ -184,7 +184,7 @@ parser.add_argument('client_game_count', \
     help='The number of games in a client', \
     metavar=None)
 args = parser.parse_args()
-client_count = args.clients
+client_count = args.client_count
 game_count = args.client_game_count
 
 ckpt = 0
@@ -192,6 +192,7 @@ while True:
     s = './model/ckpt=%d' % ckpt
     if not os.path.isdir(s):
         break
+    ckpt += 1
 ckpt -= 1
 if ckpt == -1:
     print('error: initial model directory (./model/ckpt=0) is not found!!')
@@ -202,11 +203,11 @@ while True:
     print('================')
     print('checkpoint %d' % ckpt)
     print('================')
-    train_data_dir = './trainData/ckpt=' % ckpt
-    model_dir = './model/ckpt=' % ckpt
-    model_path = model_dir + '/ckpt=' % ckpt
-    next_model_dir = './trainData/ckpt=' % (ckpt + 1)
-    next_model_path = model_dir + ('/ckpt=' % (ckpt + 1))
+    train_data_dir = './trainData/ckpt=%d' % ckpt
+    model_dir = './model/ckpt=%d' % ckpt
+    model_path = model_dir + '/ckpt=%d' % ckpt
+    next_model_dir = './trainData/ckpt=%d' % (ckpt + 1)
+    next_model_path = model_dir + ('/ckpt=%d' % (ckpt + 1))
     log_dir = next_model_dir + '/log'
 
     model_server(ckpt, model_dir, client_count, game_count)

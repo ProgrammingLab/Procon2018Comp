@@ -30,8 +30,8 @@ while True:
     header = json.loads(myreceive_with_sign(sock).decode('utf-8'))
     game_count = int(header['gameCount'])
     ckpt = int(header['checkpoint'])
-    model_dir = './model/ckpt=' % ckpt
-    model_path = model_dir + ('/ckpt=' % ckpt)
+    model_dir = './model/ckpt=%d' % ckpt
+    model_path = model_dir + ('/ckpt=%d' % ckpt)
     os.makedirs(model_dir, exist_ok=True)
     for i in range(len(header['modelFiles'])):
         b = myreceive_with_sign(sock)

@@ -1,4 +1,5 @@
 ﻿#include "DnnClient.h"
+#include <cstdio>
 
 namespace Procon2018 {
 
@@ -9,11 +10,16 @@ DnnClient::DnnClient(const std::string ip, short unsigned int port)
 : m_ioService()
 , m_socket(tcp::socket(m_ioService)) {
 
-	boost::system::error_code error;
-	m_socket.connect(tcp::endpoint(asio::ip::address::from_string(ip), port), error);
+	while (true) {
+		boost::system::error_code error;
+		m_socket.connect(tcp::endpoint(asio::ip::address::from_string(ip), port), error);
 
-	if (error) {
-		throw "connect faild";
+		if (error) {
+			printf("\rchallenging to connect...\n");
+			fflush(stdout);
+			continue;
+		}
+		break;
 	}
 }
 
