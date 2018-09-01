@@ -27,7 +27,7 @@ while True:
             break
         except:
             continue
-    header = json.loads(myreceive_with_sign(client_socket).decode('utf-8'))
+    header = json.loads(myreceive_with_sign(sock).decode('utf-8'))
     game_count = int(header['gameCount'])
     ckpt = int(header['checkpoint'])
     model_dir = './model/ckpt=' % ckpt

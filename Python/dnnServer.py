@@ -6,6 +6,7 @@ import os
 import socket
 import json
 import collections
+import argparse
 
 def to_states(json):
     res = []
