@@ -15,10 +15,11 @@ DnnClient::DnnClient(const std::string ip, short unsigned int port)
 		m_socket.connect(tcp::endpoint(asio::ip::address::from_string(ip), port), error);
 
 		if (error) {
-			printf("\rchallenging to connect...\n");
+			printf("\rchallenging to connect...");
 			fflush(stdout);
 			continue;
 		}
+		std::cout << std::endl;
 		break;
 	}
 }

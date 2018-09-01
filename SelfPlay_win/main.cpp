@@ -38,7 +38,11 @@ void SelfPlay(int gameCount, std::string outputIp) {
 	SP<DnnClient> dnn(new DnnClient("127.0.0.1", 54215));
 	std::vector<Mcts> trees;
 	for (int i = 0; i < gameCount; i++) {
+		int a = 60 + std::round(60.0*i/gameCount);
+		int b = 60 + std::round(60.0*(i + 1)/gameCount);
+		int resTurn = Rand::Next(a, b);
 		Field s = Field::RandomState();
+		s.setResTurn(resTurn);
 		trees.push_back(Mcts(s, dnn));
 	}
 
