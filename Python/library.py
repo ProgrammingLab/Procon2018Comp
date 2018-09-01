@@ -658,3 +658,16 @@ def mysend(socket, msg):
             raise RuntimeError("connection broken")
         totalsent = totalsent + sent
     # print('totalsent: ' + str(totalsent))
+
+# 先頭に10バイトの長さ情報を含んだプロトコル
+def mysend_with_sign(sock, msg):
+    sign = bytearray(str(len(msg)).encode('ascii'))
+    while len(sign) < 10:
+        sign.extend(' '.encode('ascii'))
+    mysend(sock, sign)
+    mysend(sock, msg)
+
+# 先頭に10バイトの長さ情報を含んだプロトコル
+def myreceive_with_sign(sock):
+    size = int(myreceive(sock, 10).decode('ascii'))
+    return myreceive(sock, size).decode('utf-8')

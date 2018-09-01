@@ -70,7 +70,7 @@ def dnn_server(model_path):
                 data['policy'] = policy
                 results['result'].append(data)
                 
-            sent = json.dumps(results, indent=None).encode('ascii')
+            sent = json.dumps(results, indent=None).encode('utf-8')
             send_size_str = str(len(sent))
             if len(send_size_str) > 10:
                 raise "too large"
@@ -110,5 +110,3 @@ def benchmark(model_path):
     dnn = Dnn(model_path)
     mcts = MCTS(state, dnn)
     mcts.test()
-
-dnn_server('./model/step=0.ckpt')
