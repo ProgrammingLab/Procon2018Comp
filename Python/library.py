@@ -250,7 +250,7 @@ class Move:
         return 17*17
 
 class Dnn:
-    def __init__(self, model_path):
+    def __init__(self, model_path, log_dir=None):
         self.is_training = tf.placeholder(tf.bool, shape=[])
         self.x = tf.placeholder(tf.float32, shape=[None, MAX_H, MAX_W, 8])
         self.policies0_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
@@ -296,13 +296,14 @@ class Dnn:
         )
 
         self.sess = tf.Session(config=config)
-        with tf.name_scope('summary'):
-            tf.summary.scalar('loss', self.loss)
-            tf.summary.scalar('valueLoss', self.value_loss)
-            tf.summary.scalar('policyLoss', self.policy_loss)
-            tf.summary.scalar('regularizationLoss', self.regularization_loss)
-            self.summary_op = tf.summary.merge_all()
-            self.summary_writer = tf.summary.FileWriter('./logs', self.sess.graph)
+        if log_dir:
+            with tf.name_scope('summary'):
+                tf.summary.scalar('loss', self.loss)
+                tf.summary.scalar('valueLoss', self.value_loss)
+                tf.summary.scalar('policyLoss', self.policy_loss)
+                tf.summary.scalar('regularizationLoss', self.regularization_loss)
+                self.summary_op = tf.summary.merge_all()
+                self.summary_writer = tf.summary.FileWriter(log_dir, self.sess.graph)
         if model_path:
             tf.train.Saver().restore(self.sess, model_path)
         else:

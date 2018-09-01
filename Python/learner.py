@@ -73,7 +73,7 @@ def shuffle_state(train_data):
                 v[swap_action(m)] = train_data.visit_counts[i][m]
             train_data.visit_counts[i] = v
 
-def learn(model_path, train_data_path, out_model_path):
+def learn(model_path, train_data_path, out_model_path, log_dir):
     train_data_list = []
     game_count = 0
     while True:
@@ -97,7 +97,7 @@ def learn(model_path, train_data_path, out_model_path):
         print('loaded %d/%d' % (game_id + 1, game_count))
 
     print(str(len(train_data_list)) + ' train data is here!')
-    dnn = Dnn(model_path)
+    dnn = Dnn(model_path, log_dir=log_dir)
     for train_count in range(1000):
         sys.stdout.write('trainStep: %d' % train_count)
         batch = np.random.choice(train_data_list, 512, replace=False)
@@ -202,14 +202,16 @@ while True:
     print('================')
     print('checkpoint %d' % ckpt)
     print('================')
+    train_data_dir = './trainData/ckpt=' % ckpt
     model_dir = './model/ckpt=' % ckpt
-    train_data_dir = './trainData/ckpt=' + str(ckpt)
-    model_path = model_dir + '/ckpt=' + str(ckpt)
-    next_model_path = model_dir + '/ckpt=' + str(ckpt + 1)
+    model_path = model_dir + '/ckpt=' % ckpt
+    next_model_dir = './trainData/ckpt=' % (ckpt + 1)
+    next_model_path = model_dir + ('/ckpt=' % (ckpt + 1))
+    log_dir = next_model_dir + '/log'
 
     model_server(ckpt, model_dir, client_count, game_count)
     print('waiting train data...')
     data_server(train_data_dir, client_count*game_count)
-    learn(model_path, train_data_dir, next_model_path)
+    learn(model_path, train_data_dir, next_model_path, log_dir)
 
     ckpt += 1

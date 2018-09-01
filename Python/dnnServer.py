@@ -110,3 +110,17 @@ def benchmark(model_path):
     dnn = Dnn(model_path)
     mcts = MCTS(state, dnn)
     mcts.test()
+
+parser = argparse.ArgumentParser()
+parser.add_argument('model_path', \
+    action='store', \
+    nargs=None, \
+    const=None, \
+    default=None, \
+    type=str, \
+    choices=None, \
+    help='Path to DNN model.', \
+    metavar=None)
+args = parser.parse_args()
+
+dnn_server(args.model_path)
