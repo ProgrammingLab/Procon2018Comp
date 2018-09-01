@@ -111,5 +111,4 @@ def benchmark(model_path):
     mcts = MCTS(state, dnn)
     mcts.test()
 
-
 dnn_server('./model/step=0.ckpt')

@@ -272,14 +272,14 @@ class Dnn:
         r11 = Dnn.res_block(r10, self.is_training)
         r12 = Dnn.res_block(r11, self.is_training)
         self.values = Dnn.value_out(r12, self.is_training)
-        self.value_loss = (self.values_ - self.values)**2
-        (logits0, logits1) = self.policy_out(r12, self.is_training)
-        self.policy0 = tf.nn.softmax(logits0)
-        self.policy1 = tf.nn.softmax(logits1)
-        self.policy0_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies0_, logits=logits0)
-        self.policy1_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies1_, logits=logits1)
+        self.value_loss = tf.reduce_mean((self.values_ - self.values)**2)
+        (self.logits0, self.logits1) = self.policy_out(r12, self.is_training)
+        self.policy0 = tf.nn.softmax(self.logits0)
+        self.policy1 = tf.nn.softmax(self.logits1)
+        self.policy0_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies0_, logits=self.logits0))
+        self.policy1_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies1_, logits=self.logits1))
         self.policy_loss = self.policy0_loss + self.policy1_loss
-        self.regularization_loss = 0.001*tf.losses.get_regularization_loss()
+        self.regularization_loss = 0.0005*tf.losses.get_regularization_loss()
         self.loss = self.value_loss + self.policy_loss + self.regularization_loss
         self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
 
@@ -301,7 +301,8 @@ class Dnn:
             tf.summary.scalar('valueLoss', self.value_loss)
             tf.summary.scalar('policyLoss', self.policy_loss)
             tf.summary.scalar('regularizationLoss', self.regularization_loss)
-            self.log_writer = tf.summary.FileWriter('./logs', self.sess.graph)
+            self.summary_op = tf.summary.merge_all()
+            self.summary_writer = tf.summary.FileWriter('./logs', self.sess.graph)
         if model_path:
             tf.train.Saver().restore(self.sess, model_path)
         else:
@@ -311,16 +312,17 @@ class Dnn:
         saver = tf.train.Saver()
         saver.save(self.sess, path)
     
-    def train(self, states, policy_pairs, values):
+    def train(self, states, policies0, policies1, values, steps):
         x = Dnn.adjust_to_dnn(states)
         feed_dict = {
             self.x: x,
-            self.policies0_: policy_pairs[0],
-            self.policies1_: policy_pairs[1],
-            self.values: values,
+            self.policies0_: policies0,
+            self.policies1_: policies1,
+            self.values_: values,
             self.is_training: True
         }
-        self.train_op.run(feed_dict=feed_dict)
+        _, w_summary = self.sess.run([self.train_op, self.summary_op], feed_dict=feed_dict)
+        self.summary_writer.add_summary(w_summary, steps)
 
     @staticmethod
     def he_initializer(n):
