@@ -252,7 +252,7 @@ class Move:
 class Dnn:
     def __init__(self, model_path, log_dir=None):
         self.is_training = tf.placeholder(tf.bool, shape=[])
-        self.x = tf.placeholder(tf.float32, shape=[None, MAX_H, MAX_W, 8])
+        self.x = tf.placeholder(tf.float32, shape=[None, MAX_H, MAX_W, 9])
         self.policies0_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
         self.policies1_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
         self.values_ = tf.placeholder(tf.float32)
@@ -440,7 +440,7 @@ class Dnn:
     @staticmethod
     def adjust_to_dnn(states):
         cases = len(states)
-        x = np.zeros([cases, MAX_H, MAX_W, 8])
+        x = np.zeros([cases, MAX_H, MAX_W, 9])
         for case_id in range(cases):
             state = states[case_id]
             
@@ -448,6 +448,7 @@ class Dnn:
             o_c = np.random.randint(MAX_W - state.w() + 1)
             for i in range(MAX_H):
                 for j in range(MAX_W):
+                    x[case_id][i][j][8] = state.res_turn
                     if i < o_r or o_r + state.h() <= i or j < o_c or o_c + state.w() <= j:
                         x[case_id][i][j][1] = 1.0
                         continue
