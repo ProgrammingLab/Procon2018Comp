@@ -43,7 +43,6 @@ void SelfPlay(int gameCount, std::string outputIp) {
 		int resTurn = Rand::Next(a, b);
 		Field s = Field::RandomState();
 		s.setResTurn(resTurn);
-		s.setResTurn(2);
 		trees.push_back(Mcts(s, dnn));
 	}
 
