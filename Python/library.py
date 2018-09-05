@@ -448,11 +448,11 @@ class Dnn:
             o_c = np.random.randint(MAX_W - state.w() + 1)
             for i in range(MAX_H):
                 for j in range(MAX_W):
-                    x[case_id][i][j][8] = state.res_turn
+                    x[case_id][i][j][8] = float(state.res_turn)
                     if i < o_r or o_r + state.h() <= i or j < o_c or o_c + state.w() <= j:
                         x[case_id][i][j][1] = 1.0
                         continue
-                    x[case_id][i][j][0] = state.fld[i - o_r][j - o_c].score
+                    x[case_id][i][j][0] = float(state.fld[i - o_r][j - o_c].score)
                     c = state.fld[i - o_r][j - o_c].color
                     if c == 1:
                         x[case_id][i][j][2] = 1.0
