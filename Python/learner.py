@@ -187,9 +187,19 @@ parser.add_argument('client_game_count', \
     choices=None, \
     help='The number of games in a client', \
     metavar=None)
+parser.add_argument('sends_model', \
+    action='store', \
+    nargs=None, \
+    const=None, \
+    default=None, \
+    type=int, \
+    choices=None, \
+    help='0 or 1', \
+    metavar=None)
 args = parser.parse_args()
 client_count = args.client_count
 game_count = args.client_game_count
+sends_model = args.sends_model
 
 ckpt = 0
 while True:
@@ -203,20 +213,20 @@ if ckpt == -1:
     exit()
 print('./model/ckpt=%d is found' % ckpt)
 
-while True:
-    print('================')
-    print('checkpoint %d' % ckpt)
-    print('================')
-    train_data_dir = './trainData/ckpt=%d' % ckpt
-    model_dir = './model/ckpt=%d' % ckpt
-    model_path = model_dir + '/ckpt=%d' % ckpt
-    next_model_dir = './trainData/ckpt=%d' % (ckpt + 1)
-    next_model_path = model_dir + ('/ckpt=%d' % (ckpt + 1))
-    log_dir = next_model_dir + '/log'
+print('================')
+print('checkpoint %d' % ckpt)
+print('================')
+train_data_dir = './trainData/ckpt=%d' % ckpt
+model_dir = './model/ckpt=%d' % ckpt
+model_path = model_dir + '/ckpt=%d' % ckpt
+next_model_dir = './model/ckpt=%d' % (ckpt + 1)
+next_model_path = next_model_dir + ('/ckpt=%d' % (ckpt + 1))
+log_dir = next_model_dir + '/log'
 
+if sends_model == 1:
     model_server(ckpt, model_dir, client_count, game_count)
-    print('waiting train data...')
-    data_server(train_data_dir, client_count*game_count)
-    learn(model_path, train_data_dir, next_model_path, log_dir)
-
-    ckpt += 1
+else:
+    print('skip sending model')
+print('waiting train data...')
+data_server(train_data_dir, client_count*game_count)
+learn(model_path, train_data_dir, next_model_path, log_dir)
