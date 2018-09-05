@@ -278,10 +278,10 @@ class Dnn:
         self.policy1 = tf.nn.softmax(self.logits1)
         self.policy0_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies0_, logits=self.logits0))
         self.policy1_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies1_, logits=self.logits1))
-        self.policy_loss = self.policy0_loss + self.policy1_loss
-        self.regularization_loss = 0.0005*tf.losses.get_regularization_loss()
+        self.policy_loss = (self.policy0_loss + self.policy1_loss)*0.5
+        self.regularization_loss = 0.0001*tf.losses.get_regularization_loss()
         self.loss = self.value_loss + self.policy_loss + self.regularization_loss
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
