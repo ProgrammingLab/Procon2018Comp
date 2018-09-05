@@ -43,6 +43,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 		int resTurn = Rand::Next(a, b);
 		Field s = Field::RandomState();
 		s.setResTurn(resTurn);
+		s.setResTurn(2);
 		trees.push_back(Mcts(s, dnn));
 	}
 
@@ -105,6 +106,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 				}
 				q /= tp[i].second.root()->m_countSum;
 			}
+			std::cout << tp[i].second.root()->m_countSum << std::endl;
 			logs[tp[i].first].push_back(Log(tp[i].second.copyRootState(), q, node->m_count));
 
 			tp[i].second.selfNext(0, dnn);
@@ -133,7 +135,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 					ptree child;
 					for (int j = 0; j < PlayerMove::IntCount(); j++) {
 						ptree unit;
-						unit.put("", ToStr(logs[gameId][turn].visitCount[i][j]));
+						unit.put("", std::to_string(logs[gameId][turn].visitCount[i][j]));
 						child.push_back(std::make_pair("", unit));
 					}
 					visitCount.push_back(std::make_pair("", child));
