@@ -95,6 +95,7 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
             turn_id += 1
         sys.stdout.write('\rloaded %d/%d' % (game_id + 1, game_count))
         game_id += 1
+    print()
 
     print(str(len(train_data_list)) + ' train data is here!')
     dnn = Dnn(model_path, log_dir=log_dir)
@@ -120,6 +121,7 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
             policies1.append(policy[1])
             values.append((b.q + b.z)/2)
         dnn.train(states, policies0, policies1, values, train_count)
+    print()
     dnn.save(out_model_path)
 
 def model_server(ckpt, model_dir, client_count, game_count):
@@ -145,6 +147,7 @@ def model_server(ckpt, model_dir, client_count, game_count):
         for d in model_data:
             mysend_with_sign(client_socket, d)
         sys.stdout.write('\rsent model %d/%d' % (i + 1, client_count))
+    print()
 
 def data_server(output_dir, all_game_count):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -162,6 +165,7 @@ def data_server(output_dir, all_game_count):
             with open(folder_path + '/' + str(i) + '.json', 'w') as f:
                 json.dump(receive_body['data'][i], f, indent=None)
         sys.stdout.write('\rreceived train data %d/%d' % (game_id + 1, all_game_count))
+    print()
 
 
 parser = argparse.ArgumentParser()
