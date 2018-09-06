@@ -96,6 +96,60 @@ Field Field::RandomState() {
 	return Field(resTurn, h, w, fld, pos);
 }
 
+Field Field::FromPTree(const boost::property_tree::ptree & pt) {
+	auto toInt = [](const std::string& s){
+		int ret;
+		std::stringstream ss(s);
+		ss >> ret;
+		return ret;
+	};
+
+	using namespace boost::property_tree;
+	int resTurn = toInt(pt.get<std::string>("resTurn"));
+	int h = toInt(pt.get<std::string>("h"));
+	int w = toInt(pt.get<std::string>("w"));
+	std::vector<std::vector<int>> score;
+	for (auto row : pt.get_child("score")) {
+		score.push_back({});
+		for (auto unit : row.second) {
+			std::string s = unit.second.data();
+			score.back().push_back(toInt(s));
+		}
+	}
+	std::vector<std::vector<std::optional<PlayerId>>> color;
+	for (auto row : pt.get_child("color")) {
+		color.push_back({});
+		for (auto unit : row.second) {
+			std::string s = unit.second.data();
+			if (s == "1")
+				color.back().push_back(std::optional<PlayerId>(PlayerId::A));
+			else if (s == "2")
+				color.back().push_back(std::optional<PlayerId>(PlayerId::B));
+			else
+				color.back().push_back(std::optional<PlayerId>());
+		}
+	}
+	std::vector<std::vector<Grid>> fld;
+	for (int i = 0; i < h; i++) {
+		fld.push_back({});
+		for (int j = 0; j < w; j++) {
+			Grid g;
+			g.score = score[i][j];
+			g.color = color[i][j];
+			fld.back().push_back(g);
+		}
+	}
+	std::vector<Point> pos;
+	for (auto elem : pt.get_child("pos")) {
+		int x = toInt(elem.second.get<std::string>("x"));
+		int y = toInt(elem.second.get<std::string>("y"));
+		pos.push_back(Point(x, y));
+	}
+	std::array<Point, 4> pos_;
+	for (int i = 0; i < 4; i++) pos_[i] = pos[i];
+	return Field(resTurn, h, w, fld, pos_);
+}
+
 Field::Field()
 : m_resTurn(0)
 , m_w(0)
@@ -143,7 +197,7 @@ const Grid& Field::grid(const Point &pos) const {
 	return m_field[pos.y][pos.x];
 }
 
-const Point& Field::playerPos(AgentId playerId) const {
+const Point& Field::agentPos(AgentId playerId) const {
 	return m_agent[(int)playerId];
 }
 

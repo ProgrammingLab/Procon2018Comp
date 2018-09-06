@@ -167,6 +167,16 @@ def data_server(output_dir, all_game_count):
         sys.stdout.write('\rreceived train data %d/%d' % (game_id + 1, all_game_count))
     print()
 
+def test():
+    with open('path_to_json') as f:
+        train_data = to_train_data(json.load(f))
+        s = set()
+        s.add(json.dumps(train_data.to_json(), indent=None))
+        for i in range(100000):
+            shuffle_state(train_data)
+            s.add(json.dumps(train_data.to_json(), indent=None))
+            if i%1000 == 999:
+                print(len(s))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('client_count', \

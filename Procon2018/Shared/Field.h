@@ -88,6 +88,8 @@ public:
 
 	static Field RandomState();
 
+	static Field FromPTree(const boost::property_tree::ptree &pt);
+
 	Field();
 
 	Field(int resTurn,
