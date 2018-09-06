@@ -110,7 +110,7 @@ public:
 
 	const Grid& grid(const Point &pos) const;
 
-	const Point& playerPos(AgentId agentId) const;
+	const Point& agentPos(AgentId agentId) const;
 
 	PlayerId teamOf(AgentId agentId) const;
 
