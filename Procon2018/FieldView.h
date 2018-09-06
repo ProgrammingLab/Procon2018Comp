@@ -30,7 +30,7 @@ private:
 public:
 	
 	// viewport: 描画範囲
-	FieldView(const s3d::RectF &viewport);
+	FieldView(const s3d::RectF &viewport, const Field &fld);
 
 	Field field() const;
 
@@ -40,6 +40,8 @@ public:
 				 const std::optional<const Action> &a1,
 				 const std::optional<const Action> &b0,
 				 const std::optional<const Action> &b1);
+
+	void transit(const Field &next);
 };
 
 

@@ -7,6 +7,7 @@ import copy
 import random
 import json
 import socket
+import collections
 
 dx8 = [1, 0, -1, -1, -1, 0, 1, 1]
 dy8 = [1, 1, 1, 0, -1, -1, -1, 0]
@@ -215,6 +216,29 @@ class State:
         if self.res_turn == 0:
             return self.evaluate_end()
         return None
+    def to_json(self):
+        js = collections.OrderedDict()
+        js['resTurn'] = str(self.res_turn)
+        js['h'] = str(self.h())
+        js['w'] = str(self.w())
+        score = [[0 for j in range(self.w())] for j in range(self.h())]
+        color = [[0 for j in range(self.w())] for j in range(self.h())]
+        for i in range(self.h()):
+            for j in range(self.w()):
+                score[i][j] = str(self.fld[i][j].score)
+                color[i][j] = str(self.fld[i][j].color)
+        js['score'] = score
+        js['color'] = color
+        pos = []
+        for i in range(2):
+            for j in range(2):
+                p = collections.OrderedDict()
+                p['x'] = str(self.agent_pos[i][j].x)
+                p['y'] = str(self.agent_pos[i][j].y)
+                pos.append(p)
+        js['pos'] = pos
+        return js
+
 class Action:
     def __init__(self, is_remove, dir8):
         self.is_remove = is_remove
@@ -640,6 +664,17 @@ class TrainingData:
         self.visit_counts = visit_counts
         self.q = q
         self.z = z
+    def to_json(self):
+        js = collections.OrderedDict()
+        js['state'] = self.state.to_json()
+        js['q'] = "{0:.16f}".format(self.q)
+        js['z'] = "{0:.16f}".format(self.z)
+        v = [["" for j in range(Move.max_int())] for i in range(2)]
+        for i in range(2):
+            for j in range(Move.max_int()):
+                v[i][j] = str(self.visit_counts[i][j])
+        js['visitCount'] = v
+        return js
 
 def myreceive(socket, byte_size):
     chunks = []

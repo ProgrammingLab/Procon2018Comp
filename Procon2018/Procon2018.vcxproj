@@ -210,6 +210,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Shared\Util.cpp" />
+    <ClCompile Include="TrainDataVisualizer.cpp" />
     <ClCompile Include="Visualizer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -272,6 +273,7 @@
     <ClInclude Include="Shared\Node.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Shared\Util.h" />
+    <ClInclude Include="TrainDataVisualizer.h" />
     <ClInclude Include="Visualizer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
