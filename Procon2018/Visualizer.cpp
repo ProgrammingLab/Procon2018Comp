@@ -5,7 +5,7 @@ namespace Procon2018 {
 
 
 Visualizer::Visualizer()
-: m_fv(s3d::Window::ClientRect())
+: m_fv(s3d::Window::ClientRect(), Field::RandomState())
 , m_sw()
 , m_interval(1) {
 	m_sw.start();
