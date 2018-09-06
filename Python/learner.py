@@ -15,7 +15,7 @@ def to_train_data(json):
     visit_counts = [[0.0 for j in range(Move.max_int())] for i in range(2)]
     for i in range(2):
         for j in range(Move.max_int()):
-            visit_counts[i][j] = float(json['visitCount'][i][j])
+            visit_counts[i][j] = int(json['visitCount'][i][j])
     return TrainingData(state, visit_counts, q, z)
 
 def swap_action(int_move):
