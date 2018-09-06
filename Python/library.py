@@ -276,35 +276,37 @@ class Move:
 class Dnn:
     def __init__(self, model_path, log_dir=None):
         self.is_training = tf.placeholder(tf.bool, shape=[])
+        self.input_dropout_rate = tf.placeholder(tf.float32, shape=[])
+        self.hidden_dropout_rate = tf.placeholder(tf.float32, shape=[])
         self.x = tf.placeholder(tf.float32, shape=[None, MAX_H, MAX_W, 9])
         self.policies0_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
         self.policies1_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
         self.values_ = tf.placeholder(tf.float32)
 
-        x_ = Dnn.input_to_res_block(self.x, self.is_training)
-        r0 = Dnn.res_block(x_, self.is_training)
-        r1 = Dnn.res_block(r0, self.is_training)
-        r2 = Dnn.res_block(r1, self.is_training)
-        r3 = Dnn.res_block(r2, self.is_training)
-        r4 = Dnn.res_block(r3, self.is_training)
-        r5 = Dnn.res_block(r4, self.is_training)
-        r6 = Dnn.res_block(r5, self.is_training)
-        r7 = Dnn.res_block(r6, self.is_training)
-        r8 = Dnn.res_block(r7, self.is_training)
-        r9 = Dnn.res_block(r8, self.is_training)
-        r10 = Dnn.res_block(r9, self.is_training)
-        r11 = Dnn.res_block(r10, self.is_training)
-        r12 = Dnn.res_block(r11, self.is_training)
-        self.values = Dnn.value_out(r12, self.is_training)
+        x_ = self.first_res_block(self.x)
+        r0 = self.res_block(x_)
+        r1 = self.res_block(r0)
+        r2 = self.res_block(r1)
+        r3 = self.res_block(r2)
+        r4 = self.res_block(r3)
+        r5 = self.res_block(r4)
+        r6 = self.res_block(r5)
+        r7 = self.res_block(r6)
+        r8 = self.res_block(r7)
+        r9 = self.res_block(r8)
+        r10 = self.res_block(r9)
+        r11 = self.res_block(r10)
+        r12 = self.res_block(r11)
+        self.values = self.value_out(r12)
         self.value_loss = tf.reduce_mean((self.values_ - self.values)**2)
-        (self.logits0, self.logits1) = self.policy_out(r12, self.is_training)
+        (self.logits0, self.logits1) = self.policy_out(r12)
         self.policy0 = tf.nn.softmax(self.logits0)
         self.policy1 = tf.nn.softmax(self.logits1)
         self.policy0_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies0_, logits=self.logits0))
         self.policy1_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies1_, logits=self.logits1))
         self.policy_loss = (self.policy0_loss + self.policy1_loss)*0.5
-        self.regularization_loss = 0.0001*tf.losses.get_regularization_loss()
-        self.loss = self.value_loss + self.policy_loss + self.regularization_loss
+        # self.regularization_loss = 0.0001*tf.losses.get_regularization_loss()
+        self.loss = self.value_loss + self.policy_loss #+ self.regularization_loss
         self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -325,7 +327,7 @@ class Dnn:
                 tf.summary.scalar('loss', self.loss)
                 tf.summary.scalar('valueLoss', self.value_loss)
                 tf.summary.scalar('policyLoss', self.policy_loss)
-                tf.summary.scalar('regularizationLoss', self.regularization_loss)
+                # tf.summary.scalar('regularizationLoss', self.regularization_loss)
                 self.summary_op = tf.summary.merge_all()
                 self.summary_writer = tf.summary.FileWriter(log_dir, self.sess.graph)
         if model_path:
@@ -344,7 +346,9 @@ class Dnn:
             self.policies0_: policies0,
             self.policies1_: policies1,
             self.values_: values,
-            self.is_training: True
+            self.is_training: True,
+            self.input_dropout_rate: 0.1,
+            self.hidden_dropout_rate: 0.25
         }
         _, w_summary = self.sess.run([self.train_op, self.summary_op], feed_dict=feed_dict)
         self.summary_writer.add_summary(w_summary, steps)
@@ -355,30 +359,16 @@ class Dnn:
     @staticmethod
     def xavier_initializer(n):
         return tf.initializers.truncated_normal(stddev=math.sqrt(1/n))
-    @staticmethod
-    def input_to_res_block(input_layer, is_training):
-        shape = input_layer.get_shape().as_list()
-        n = shape[1]*shape[2]*shape[3]
-        conv = tf.layers.conv2d(
-            inputs=input_layer,
-            filters=64,
-            kernel_size=[3,3],
-            padding="same",
-            kernel_initializer=Dnn.he_initializer(n),
-            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        bn = tf.layers.batch_normalization(
-            conv,
-            training=is_training)
-        return tf.nn.relu(bn)
-    @staticmethod
-    def res_block(input_layer, is_training):
+
+    def first_res_block(self, input):
         bn0 = tf.layers.batch_normalization(
-            input_layer,
-            training=is_training)
-        shape0 = bn0.get_shape().as_list()
+            input,
+            training=self.is_training)
+        relu0 = tf.nn.relu(bn0)
+        shape0 = relu0.get_shape().as_list()
         n0 = shape0[1]*shape0[2]*shape0[3]
         conv0 = tf.layers.conv2d(
-            inputs=bn0,
+            inputs=relu0,
             filters=64,
             kernel_size=[3,3],
             padding="same",
@@ -386,77 +376,136 @@ class Dnn:
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         bn1 = tf.layers.batch_normalization(
             conv0,
-            training=is_training)
-        relu = tf.nn.relu(bn1)
-        shape1 = relu.get_shape().as_list()
+            training=self.is_training)
+        relu1 = tf.nn.relu(bn1)
+        dr = tf.layers.dropout(relu1, rate=self.input_dropout_rate)
+        shape1 = dr.get_shape().as_list()
         n1 = shape1[1]*shape1[2]*shape1[3]
         conv1 = tf.layers.conv2d(
-            inputs=relu,
+            inputs=dr,
             filters=64,
             kernel_size=[3,3],
             padding="same",
             kernel_initializer=Dnn.he_initializer(n1),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        return tf.add(conv1, input_layer)
+
+        ishape = input.get_shape().as_list()
+        ni = ishape[1]*ishape[2]*ishape[3]
+        input_flat = tf.reshape(input, [-1, ni])
+        ni_ = ishape[1]*ishape[2]*64
+        input_dense = tf.layers.dense(
+            input_flat,
+            units=ni_,
+            kernel_initializer=Dnn.xavier_initializer(ni_),
+            kernel_regularizer=tf.contrib.layers.l2_regularizer(scale=1.0))
+        input_ = tf.reshape(input_dense, [-1, ishape[1], ishape[2], 64])
+        input_dr = tf.layers.dropout(input_, rate=self.input_dropout_rate)
+        return tf.add(conv1, input_dr)
+
+    def res_block(self, input):
+        bn0 = tf.layers.batch_normalization(
+            input,
+            training=self.is_training)
+        relu0 = tf.nn.relu(bn0)
+        shape0 = relu0.get_shape().as_list()
+        n0 = shape0[1]*shape0[2]*shape0[3]
+        conv0 = tf.layers.conv2d(
+            inputs=relu0,
+            filters=64,
+            kernel_size=[3,3],
+            padding="same",
+            kernel_initializer=Dnn.he_initializer(n0),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
+        bn1 = tf.layers.batch_normalization(
+            conv0,
+            training=self.is_training)
+        relu1 = tf.nn.relu(bn1)
+        dr = tf.layers.dropout(relu1, rate=self.hidden_dropout_rate)
+        shape1 = dr.get_shape().as_list()
+        n1 = shape1[1]*shape1[2]*shape1[3]
+        conv1 = tf.layers.conv2d(
+            inputs=dr,
+            filters=64,
+            kernel_size=[3,3],
+            padding="same",
+            kernel_initializer=Dnn.he_initializer(n1),
+            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
+        return tf.add(conv1, input)
+
     # tensorflowの関数の関係上、softmaxまでせずに返す
-    @staticmethod
-    def policy_out(input_layer, is_training):
+    def policy_out(self, input):
         # batch_normalizationの順番どうすべき？
         # → pre-activation版のres-blockの性質がよくわからないが,
         #   原論文でres-block → avr-pooling → fully-connectedしてる辺り見ると
         #   多分いきなり畳み込んで大丈夫
-        shape0 = input_layer.get_shape().as_list()
+        # → res-blockの後だからちゃんとbnとreluをしておかなければならないのではと思いました
+        #   fully-connectedの前にはいらなさそう
+        bn0 = tf.layers.batch_normalization(
+            input,
+            training=self.is_training)
+        relu0 = tf.nn.relu(bn0)
+        
+        shape0 = relu0.get_shape().as_list()
         n0 = shape0[1]*shape0[2]*shape0[3]
         conv = tf.layers.conv2d(
-            inputs=input_layer,
+            inputs=relu0,
             filters=2,
             kernel_size=[1,1],
             padding="same",
             kernel_initializer=Dnn.he_initializer(n0),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        bn = tf.layers.batch_normalization(
+        bn1 = tf.layers.batch_normalization(
             conv,
-            training=is_training)
-        relu = tf.nn.relu(bn)
+            training=self.is_training)
+        relu1 = tf.nn.relu(bn1)
+        dr = tf.layers.dropout(relu1, rate=self.hidden_dropout_rate)
         n1 = MAX_H*MAX_W*2
-        relu_flat = tf.reshape(relu, [-1, n1])
+        dr_flat = tf.reshape(dr, [-1, n1])
         # TODO?: he_initializeの方が良いかも
+        # ↑活性化なし=恒等関数だからxavierでいいんじゃない？
         logits0 = tf.layers.dense(
-            relu_flat,
+            dr_flat,
             units=Move.max_int(),
             kernel_initializer=Dnn.xavier_initializer(n1),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         logits1 = tf.layers.dense(
-            relu_flat,
+            dr_flat,
             units=Move.max_int(),
             kernel_initializer=Dnn.xavier_initializer(n1),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         return (logits0, logits1)
-    @staticmethod
-    def value_out(input_layer, is_training):
-        shape0 = input_layer.get_shape().as_list()
+
+    def value_out(self, input):
+        bn0 = tf.layers.batch_normalization(
+            input,
+            training=self.is_training)
+        relu0 = tf.nn.relu(bn0)
+        shape0 = relu0.get_shape().as_list()
         n0 = shape0[1]*shape0[2]*shape0[3]
         conv = tf.layers.conv2d(
-            inputs=input_layer,
+            inputs=relu0,
             filters=1,
             kernel_size=[1,1],
             padding="same",
             kernel_initializer=Dnn.he_initializer(n0),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        bn = tf.layers.batch_normalization(
+        bn1 = tf.layers.batch_normalization(
             conv,
-            training=is_training)
-        relu = tf.nn.relu(bn)
+            training=self.is_training)
+        relu1 = tf.nn.relu(bn1)
+        dr0 = tf.layers.dropout(relu1, rate=self.hidden_dropout_rate)
         n1 = MAX_H*MAX_W*1
-        relu_flat = tf.reshape(relu, [-1, n1])
+        dr0_flat = tf.reshape(dr0, [-1, n1])
         dense0 = tf.layers.dense(
-            relu_flat,
+            dr0_flat,
             units=64,
             kernel_initializer=Dnn.he_initializer(n1),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
+        relu2 = tf.nn.relu(dense0)
+        dr1 = tf.layers.dropout(relu2, rate=self.hidden_dropout_rate)
         n2 = 64
         dense1 = tf.layers.dense(
-            dense0,
+            dr1,
             units=1,
             kernel_initializer=Dnn.xavier_initializer(n2),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
@@ -506,13 +555,23 @@ class Dnn:
     # return: {'policy_pair': (Move, Move), 'value': float}
     # valueはプレイヤー0にとって正で、[-1, 1]
     def calc(self, state):
-        feed_dict={self.x:Dnn.adjust_to_dnn([state]), self.is_training:False}
+        feed_dict = {
+            self.x: Dnn.adjust_to_dnn([state]),
+            self.is_training: False,
+            self.input_dropout_rate: 0,
+            self.hidden_dropout_rate: 0
+        }
         result = self.sess.run([self.values, self.policy0, self.policy1], feed_dict=feed_dict)
         return {'policy_pair':(result[1][0], result[2][0]), 'value':result[0][0]}
 
     # return: {'policy_pair': ([Move], [Move]), 'value': [float]}
     def calc_batch(self, states):
-        feed_dict={self.x:Dnn.adjust_to_dnn(states), self.is_training:False}
+        feed_dict = {
+            self.x: Dnn.adjust_to_dnn(states),
+            self.is_training: False,
+            self.input_dropout_rate: 0.1,
+            self.hidden_dropout_rate: 0.3
+        }
         result = self.sess.run([self.values, self.policy0, self.policy1], feed_dict=feed_dict)
         return {'policy_pair':(result[1], result[2]), 'value':result[0]}
 
