@@ -36,8 +36,9 @@ public:
 	bool goDown(Field &field, std::vector<IntMoves> &path);
 
 	// 評価結果vをバックアップ
-	// expands: 下端のノードを展開するか (fieldがゲーム終了状態になる経路なら, 絶対に展開しないべき)
-	void backup(const std::vector<IntMoves> &path, double v, const PolicyPair &policyPair, bool expands);
+	void backupWithExpansion(const std::vector<IntMoves> &path, double v, const PolicyPair &policyPair);
+
+	void backup(const std::vector<IntMoves> &path, double v);
 
 	// 自己対局を1ターン進める. 根ノードも取り替える.
 	// ゲームが終了した時trueを返す. 以降呼び出されても何もしない

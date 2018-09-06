@@ -139,6 +139,10 @@ public:
 
 	bool checkAllValid(PlayerId playerId, const PlayerMove &m) const;
 
+	int po() const;
+
+	double value() const;
+
 	boost::property_tree::ptree toPTree() const;
 };
 

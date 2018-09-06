@@ -69,7 +69,7 @@ void SelfPlay(int gameCount, std::string outputDir) {
 				}
 #pragma omp for
 				for (int i = 0; i < n; i++) {
-					tp[i].second.backup(paths[i], values[i], policies[i], expands[i]);
+					tp[i].second.backupWithExpansion(paths[i], values[i], policies[i], expands[i]);
 				}
 			}
 		}
@@ -160,7 +160,7 @@ void MctsTest() {
 		PolicyPair policyPair;
 		double v = dnn->Evaluate(state, policyPair);
 
-		mcts.backup(path, v, policyPair, expands);
+		mcts.backupWithExpansion(path, v, policyPair, expands);
 	}
 
 	// debug output

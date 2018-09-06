@@ -45,15 +45,23 @@ bool Mcts::goDown(Field & field, std::vector<IntMoves>& path) {
 	return goDown(m_root, field, path);
 }
 
-void Mcts::backup(const std::vector<IntMoves>& path, double v, const PolicyPair & policyPair, bool expands) {
+void Mcts::backupWithExpansion(const std::vector<IntMoves>& path, double v, const PolicyPair & policyPair) {
 	SP<Node> node = m_root;
 	for (int i = 0; i < (int)path.size() - 1; i++) {
 		node->backup(path[i], v);
 		node = node->m_next[path[i]];
 	}
 	node->backup(path.back(), v);
-	if (expands)
-		node->m_next[path.back()] = SP<Node>(new Node(policyPair));
+	node->m_next[path.back()] = SP<Node>(new Node(policyPair));
+}
+
+void Mcts::backup(const std::vector<IntMoves>& path, double v) {
+	SP<Node> node = m_root;
+	for (int i = 0; i < (int)path.size() - 1; i++) {
+		node->backup(path[i], v);
+		node = node->m_next[path[i]];
+	}
+	node->backup(path.back(), v);
 }
 
 bool Mcts::selfNext(double temperature, SP<DnnClient> dnn) {

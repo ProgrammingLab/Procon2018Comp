@@ -38,11 +38,12 @@ void SelfPlay(int gameCount, std::string outputIp) {
 	SP<DnnClient> dnn(new DnnClient("127.0.0.1", 54215));
 	std::vector<Mcts> trees;
 	for (int i = 0; i < gameCount; i++) {
-		int a = 60 + std::round(60.0*i/gameCount);
-		int b = 60 + std::round(60.0*(i + 1)/gameCount);
+		int a = 60 + std::lround(60.0*i/gameCount);
+		int b = 60 + std::lround(60.0*(i + 1)/gameCount);
 		int resTurn = Rand::Next(a, b);
 		Field s = Field::RandomState();
 		s.setResTurn(resTurn);
+		s.setResTurn(2);
 		trees.push_back(Mcts(s, dnn));
 	}
 
@@ -67,31 +68,65 @@ void SelfPlay(int gameCount, std::string outputIp) {
 		int n = (int)tp.size();
 		if (n == 0) break;
 
-		std::vector<std::vector<IntMoves>> paths(n);
-		std::vector<bool> expands(n);
-		std::vector<Field> states(n);
+		// 下のやつらと違い, 全てのゲーム分の長さ
+		std::vector<double> v;
+		std::vector<std::vector<IntMoves>> paths;
+		std::vector<Field> states;
+		std::vector<int> idx;
+		std::vector<bool> needExpansion;
 
-		std::vector<PolicyPair> policies(n);
+		// DNNの評価の対象となるゲームの数分の長さ
+		std::vector<Field> needDnn;
+		std::vector<PolicyPair> policies;
 		std::vector<double> values;
+		
+
 		for (int simCount = 0; simCount < 1000; simCount++) {
 			std::cout << ".";
 			if (simCount%100 == 99) std::cout << std::endl;
+			v.clear();
+			v.resize(n);
 			paths.clear();
 			paths.resize(n);
+			states.clear();
+			states.resize(n);
+			idx.clear();
+			idx.resize(n);
+			needExpansion.clear();
+			needExpansion.resize(n);
+			needDnn.clear();
+			policies.clear();
+			values.clear();
 #pragma omp parallel
 			{
 #pragma omp for
 				for (int i = 0; i < n; i++) {
 					states[i] = tp[i].second.copyRootState();
-					expands[i] = !tp[i].second.goDown(states[i], paths[i]);
+					needExpansion[i] = !tp[i].second.goDown(states[i], paths[i]);
+					if (!needExpansion[i]) {
+						idx[i] = -1;
+						v[i] = states[i].value(); // GAME NO OWARI
+						continue;
+					}
 				}
 #pragma omp single
 				{
-					values = dnn->Evaluate(states, policies);
+					for (int i = 0; i < n; i++) {
+						if (!needExpansion[i]) continue;
+						idx[i] = (int)needDnn.size();
+						needDnn.push_back(states[i]);
+					}
+					policies.resize(needDnn.size());
+					values = dnn->Evaluate(needDnn, policies);
 				}
 #pragma omp for
 				for (int i = 0; i < n; i++) {
-					tp[i].second.backup(paths[i], values[i], policies[i], expands[i]);
+					if (needExpansion[i]) {
+						tp[i].second.backupWithExpansion(paths[i], values[idx[i]], policies[idx[i]]);
+					}
+					else {
+						tp[i].second.backup(paths[i], v[i]);
+					}
 				}
 			}
 		}
@@ -105,7 +140,6 @@ void SelfPlay(int gameCount, std::string outputIp) {
 				}
 				q /= tp[i].second.root()->m_countSum;
 			}
-			std::cout << tp[i].second.root()->m_countSum << std::endl;
 			logs[tp[i].first].push_back(Log(tp[i].second.copyRootState(), q, node->m_count));
 
 			tp[i].second.selfNext(0, dnn);
@@ -116,10 +150,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 	using namespace boost::property_tree;
 	for (int gameId = 0; gameId < gameCount; gameId++) {
 		Field endState = trees[gameId].copyRootState();
-		double z = 0.0;
-		auto gameRes = endState.calcScore();
-		if (gameRes.first > gameRes.second) z = +1.0;
-		if (gameRes.first < gameRes.second) z = -1.0;
+		double z = endState.value();
 
 		ptree sent;
 		ptree data;
@@ -182,7 +213,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 }
 
 void MctsTest() {
-	int score[4][5] = {
+	/*int score[4][5] = {
 		{0, 0, 1, 0, 0},
 	{0,-2, 1,-2, 0},
 	{0, 0, 1, 0, 0},
@@ -204,19 +235,29 @@ void MctsTest() {
 		}
 	}
 	std::array<Point, 4> agent = {Point(0, 0), Point(4, 0), Point(0, 3), Point(4, 3)};
-	Field first(2, 4, 5, fld, agent);
+	Field first(2, 4, 5, fld, agent);*/
+
+	using namespace boost::property_tree;
+	std::ifstream ifs(R"(C:\Users\winG3\Downloads\0.json)");
+	ptree pt;
+	read_json(ifs, pt);
+	Field first = Field::FromPTree(pt.get_child("state"));
+
 	SP<DnnClient> dnn = SP<DnnClient>(new DnnClient("127.0.0.1", 54215));
 	Mcts mcts(first, dnn);
+	PolicyPair policyPair;
 	for (int i = 0; i < 1000; i++) {
 		std::cout << i << std::endl;
 		Field state = mcts.copyRootState();
 		std::vector<IntMoves> path;
 		bool expands = !mcts.goDown(state, path);
 
-		PolicyPair policyPair;
-		double v = dnn->Evaluate(state, policyPair);
-
-		mcts.backup(path, v, policyPair, expands);
+		if (expands) {
+			double v = dnn->Evaluate(state, policyPair);
+			mcts.backupWithExpansion(path, v, policyPair);
+		}
+		else
+			mcts.backup(path, state.value());
 	}
 
 	// debug output
@@ -234,17 +275,24 @@ void MctsTest() {
 	std::cout << "(" + show(move.a0) + "," << show(move.a1) << ") : (" << p0 << "," << p1 << ")" << std::endl;
 	}*/
 
-	mcts.selfNext(0, dnn);
+	//mcts.selfNext(0, dnn);
+	for (int i = 0; i < 2; i++) {
+		for (IntMove j = 0; j < PlayerMove::IntCount(); j++) {
+			std::cout << (int)j << ": " << first.checkAllValid((PlayerId)i, PlayerMove::FromInt(j)) << std::endl;
+		}
+	}
 }
 
 int main(int argc, char* argv[])
 {
+	// /*
 	using namespace Procon2018;
 	Rand::InitializeWithTime();
 	std::stringstream ss(argv[1]);
 	int gameCount;
 	ss >> gameCount;
 	SelfPlay(gameCount, argv[2]);
+	// */
 
 	/*
 	Field field = Field::RandomState();

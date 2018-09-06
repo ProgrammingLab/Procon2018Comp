@@ -355,6 +355,23 @@ bool Field::checkAllValid(PlayerId playerId, const PlayerMove & m) const {
 	return (!m.a0 || checkValid(i0, m.a0.value())) && (!m.a1 || checkValid(i1, m.a1.value()));
 }
 
+int Field::po() const {
+	int ret = 0;
+	for (int i = 0; i < h(); i++) {
+		for (int j = 0; j < w(); j++) {
+			ret += std::abs(m_field[i][j].score);
+		}
+	}
+	return ret;
+}
+
+double Field::value() const {
+	std::pair<int, int> res = calcScore();
+	double score = (res.first - res.second)/(double)po();
+	score *= 10.0;
+	return std::tanh(score);
+}
+
 boost::property_tree::ptree Field::toPTree() const {
 	using namespace boost::property_tree;
 	ptree res;
