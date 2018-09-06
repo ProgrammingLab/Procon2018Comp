@@ -336,7 +336,7 @@ bool Field::checkAllValid(const OptAction& a0,
 	const OptAction* v[4] = {&a0, &a1, &b0, &b1 };
 	for (int i = 0; i < 4; i++) {
 		if (!*v[i]) continue;
-		if (checkValid((AgentId)i, v[i]->value())) return false;
+		if (!checkValid((AgentId)i, v[i]->value())) return false;
 	}
 	return true;
 }
