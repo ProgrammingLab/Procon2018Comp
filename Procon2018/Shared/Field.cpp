@@ -269,7 +269,7 @@ bool Field::checkValid(AgentId agentId, const Action & a) const {
 		Point target = m_agent[(int)agentId] + Neighbour8(a.dir);
 		if (outOfField(target)) return false;
 		if (auto &c = m_field[target.y][target.x].color)
-			if (c.value() != teamOf(agentId)) return true;
+			return true;
 		return false;
 	}
 	throw "エッ";
