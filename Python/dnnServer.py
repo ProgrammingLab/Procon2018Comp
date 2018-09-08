@@ -16,6 +16,16 @@ def to_states(json):
         res.append(to_state(state_json))
     return res
 
+# 直に変更
+def swap_player(state):
+    for i in range(state.h()):
+        for j in range(state.w()):
+            c = state.fld[i][j].color
+            state.fld[i][j].color = [0, 2, 1][c]
+    p0 = state.agent_pos[0]
+    p1 = state.agent_pos[1]
+    state.agent_pos[0] = p1
+    state.agent_pos[1] = p0
 
 def dnn_server(model_path):
     dnn = Dnn(model_path)
@@ -31,6 +41,12 @@ def dnn_server(model_path):
             # print(size)
             receive_body = json.loads(myreceive(client_socket, receive_size).decode('utf-8'))
             states = to_states(receive_body)
+            n = len(states)
+            swapped = [False for i in range(n)]
+            for i in range(n):
+                if np.random.randint(2) == 0:
+                    swapped[i] = True
+                    swap_player(states[i])
 
             # debug output
             # for state in states:
@@ -56,18 +72,23 @@ def dnn_server(model_path):
             r = dnn.calc_batch(states)
             policy_data = r['policy_pair']
             value = r['value']
-            n = len(states)
 
             results = collections.OrderedDict()
             results['result'] = []
             for result_id in range(n):
                 policy = [[0.0 for j in range(Move.max_int())] for i in range(2)]
                 for i in range(2):
+                    i_ = i
+                    if swapped[result_id]:
+                        i_ = 1 - i
                     for j in range(Move.max_int()):
-                        policy[i][j] = "{0:.16f}".format(policy_data[i][result_id][j])
+                        policy[i][j] = "{0:.16f}".format(policy_data[i_][result_id][j])
                 
+                v = value[result_id]
+                if swapped[result_id]:
+                    v *= -1.0
                 data = collections.OrderedDict()
-                data['value'] = "{0:.16f}".format(value[result_id])
+                data['value'] = "{0:.16f}".format(v)
                 data['policy'] = policy
                 results['result'].append(data)
                 
