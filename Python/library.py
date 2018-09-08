@@ -348,7 +348,7 @@ class Dnn:
             self.values_: values,
             self.is_training: True,
             self.input_dropout_rate: 0.1,
-            self.hidden_dropout_rate: 0.25
+            self.hidden_dropout_rate: 0.3
         }
         _, w_summary = self.sess.run([self.train_op, self.summary_op], feed_dict=feed_dict)
         self.summary_writer.add_summary(w_summary, steps)
@@ -569,8 +569,8 @@ class Dnn:
         feed_dict = {
             self.x: Dnn.adjust_to_dnn(states),
             self.is_training: False,
-            self.input_dropout_rate: 0.1,
-            self.hidden_dropout_rate: 0.3
+            self.input_dropout_rate: 0,
+            self.hidden_dropout_rate: 0
         }
         result = self.sess.run([self.values, self.policy0, self.policy1], feed_dict=feed_dict)
         return {'policy_pair':(result[1], result[2]), 'value':result[0]}
