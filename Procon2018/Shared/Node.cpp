@@ -37,7 +37,7 @@ IntMove Node::decideMove(PlayerId playerId, const Field & field) const {
 	for (IntMove i = 0; i < PlayerMove::IntCount(); i++) {
 		if (!field.checkAllValid(playerId, PlayerMove::FromInt(i)))
 			continue;
-		double c = 1.0;
+		double c = 5.0;
 		double w = m_w[(int)playerId][i];
 		double n = m_count[(int)playerId][i];
 		double q = (n > 0 ? w/n : 0);
