@@ -99,7 +99,7 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
 
     print(str(len(train_data_list)) + ' train data is here!')
     dnn = Dnn(model_path, log_dir=log_dir)
-    for train_count in range(1000):
+    for train_count in range(800):
         sys.stdout.write('\rtrainStep: %d' % train_count)
         batch = np.random.choice(train_data_list, 512, replace=False)
         states = []
