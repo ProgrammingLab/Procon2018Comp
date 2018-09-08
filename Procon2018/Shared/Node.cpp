@@ -35,7 +35,8 @@ IntMove Node::decideMove(PlayerId playerId, const Field & field) const {
 	double max = -1e10;
 	IntMove res = -1;
 	for (IntMove i = 0; i < PlayerMove::IntCount(); i++) {
-		if (!field.checkAllValid(playerId, PlayerMove::FromInt(i)))
+		PlayerMove m = PlayerMove::FromInt(i);
+		if (!field.checkAllValid(playerId, m))
 			continue;
 		double c = 5.0;
 		double w = m_w[(int)playerId][i];
@@ -43,6 +44,7 @@ IntMove Node::decideMove(PlayerId playerId, const Field & field) const {
 		double q = (n > 0 ? w/n : 0);
 		double p = m_policyPair[(int)playerId][i];
 		double u = c * p * std::sqrt(m_countSum) / (1 + n);
+		if (!m.a0 || !m.a1) u = 0.0;
 		if (res == -1 || max < q + u) {
 			max = q + u;
 			res = i;
