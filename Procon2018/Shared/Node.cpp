@@ -39,6 +39,8 @@ IntMove Node::decideMove(PlayerId playerId, const Field & field) const {
 		if (!field.checkAllValid(playerId, m))
 			continue;
 		double c = 5.0;
+		if (field.isBad(playerId, m))
+			c *= 0.5;
 		double w = m_w[(int)playerId][i];
 		double n = m_count[(int)playerId][i];
 		double q = (n > 0 ? w/n : 0);

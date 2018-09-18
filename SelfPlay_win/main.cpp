@@ -139,10 +139,10 @@ void SelfPlay(int gameCount, std::string outputIp) {
 				}
 				q /= tp[i].second.root()->m_countSum;
 			}
-			logs[tp[i].first].push_back(Log(tp[i].second.copyRootState(), q, node->m_count));
-
-			double t = 0.0;
-			if (globalTurn < 30) t = 1.0;
+			Field s = tp[i].second.copyRootState();
+			logs[tp[i].first].push_back(Log(s, q, node->m_count));
+			
+			double t = std::min(0.5, 0.5*s.resTurn()/30.0);
 			tp[i].second.selfNext(t, dnn);
 		}
 		globalTurn++;

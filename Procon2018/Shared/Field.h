@@ -132,6 +132,13 @@ public:
 					   const OptAction &a1,
 					   const OptAction &b0,
 					   const OptAction &b1) const;
+	
+	//ほぼ確実に悪手だと分かる場合はtrue
+	bool isBad(AgentId agentId, const Action &a) const;
+
+	bool isBad(PlayerId playerId, const PlayerMove &m) const;
+
+	bool isBad(const PlayerMove &m0, const PlayerMove &m1) const;
 
 	bool forward(const PlayerMove &m0, const PlayerMove &m1);
 

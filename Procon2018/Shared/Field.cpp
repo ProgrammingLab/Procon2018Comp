@@ -341,6 +341,31 @@ bool Field::checkAllValid(const OptAction& a0,
 	return true;
 }
 
+bool Field::isBad(AgentId agentId, const Action & a) const {
+	Point next = m_agent[(int)agentId] + Neighbour8(a.dir);
+	if (outOfField(next)) return true;
+	if (auto &c = m_field[next.y][next.x].color)
+		if (c.value() == teamOf(agentId)) return true;
+	return false;
+}
+
+bool Field::isBad(PlayerId playerId, const PlayerMove & m) const {
+	AgentId i0 = (AgentId)((int)playerId*2);
+	AgentId i1 = (AgentId)((int)playerId*2 + 1);
+	if (m.a0 && isBad(i0, m.a0.value())) return true;
+	if (m.a1 && isBad(i1, m.a1.value())) return true;
+	return false;
+}
+
+bool Field::isBad(const PlayerMove & m0, const PlayerMove & m1) const {
+	const OptAction* v[4] = {&m0.a0, &m0.a1, &m1.a0, &m1.a1 };
+	for (int i = 0; i < 4; i++) {
+		if (!*v[i]) continue;
+		if (isBad((AgentId)i, v[i]->value())) return true;
+	}
+	return false;
+}
+
 bool Field::forward(const PlayerMove & m0, const PlayerMove & m1) {
 	return forward(m0.a0, m0.a1, m1.a0, m1.a1);
 }
