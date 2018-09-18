@@ -7,6 +7,7 @@ import json
 import numpy as np
 import argparse
 import collections
+import shutil
 
 def to_train_data(json):
     state = to_state(json['state'])
@@ -97,35 +98,51 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
         game_id += 1
     print()
 
+    if len(train_data_list) == 0:
+        print('train data not found')
+        return
     print(str(len(train_data_list)) + ' train data is here!')
     dnn = Dnn(model_path, log_dir=log_dir)
-    for train_count in range(800):
-        sys.stdout.write('\rtrainStep: %d' % train_count)
-        batch = np.random.choice(train_data_list, 512, replace=False)
-        states = []
-        policies0 = []
-        policies1 = []
-        values = []
-        for b in batch:
-            shuffle_state(b)
-            count_sum = [0, 0]
-            for i in range(2):
-                for j in range(Move.max_int()):
-                    count_sum[i] += b.visit_counts[i][j]
-            policy = [[0.0 for j in range(Move.max_int())] for i in range(2)]
-            for i in range(2):
-                for j in range(Move.max_int()):
-                    policy[i][j] = b.visit_counts[i][j]/count_sum[i]
-            states.append(b.state)
-            policies0.append(policy[0])
-            policies1.append(policy[1])
-            # values.append((b.q + b.z)/2)
-            values.append(b.z)
-        dnn.train(states, policies0, policies1, values, train_count)
+    train_count = 0
+    while True:
+        if train_count == 3000:
+            break
+        try:
+            sys.stdout.write('\rtrainStep: %d' % train_count)
+            batch = np.random.choice(train_data_list, 256, replace=False)
+            batch2 = []
+            for v in batch:
+                batch2.append(v)
+                batch2.append(copy.deepcopy(v))
+            states = []
+            policies0 = []
+            policies1 = []
+            values = []
+            for b in batch2:
+                shuffle_state(b)
+                count_sum = [0, 0]
+                for i in range(2):
+                    for j in range(Move.max_int()):
+                        count_sum[i] += b.visit_counts[i][j]
+                policy = [[0.0 for j in range(Move.max_int())] for i in range(2)]
+                for i in range(2):
+                    for j in range(Move.max_int()):
+                        policy[i][j] = b.visit_counts[i][j]/count_sum[i]
+                states.append(b.state)
+                policies0.append(policy[0])
+                policies1.append(policy[1])
+                # values.append((b.q + b.z)/2)
+                values.append(b.z)
+            dnn.train(states, policies0, policies1, values, train_count)
+            train_count += 1
+        except:
+            pass
     print()
     dnn.save(out_model_path)
 
 def model_server(ckpt, model_dir, client_count, game_count):
+    if client_count == 0:
+        return
     model_data = []
     header = collections.OrderedDict()
     header['modelFiles'] = []
@@ -151,6 +168,8 @@ def model_server(ckpt, model_dir, client_count, game_count):
     print()
 
 def data_server(output_dir, all_game_count):
+    if all_game_count == 0:
+        return
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(('', 54216))
     server_socket.listen(1)
@@ -214,8 +233,8 @@ sends_model = args.sends_model
 
 ckpt = 0
 while True:
-    s = './model/ckpt=%d' % ckpt
-    if not os.path.isdir(s):
+    s = './model/ckpt=%d/checkpoint' % ckpt
+    if not os.path.exists(s):
         break
     ckpt += 1
 ckpt -= 1
