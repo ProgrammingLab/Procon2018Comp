@@ -45,6 +45,8 @@ public:
 	// temperatureが1に近づくほど, 訪問回数に比例した確率で手を選ぶ
 	// temperatureが0に近づくほど, 訪問回数の多い手をひいきする
 	bool selfNext(double temperature, SP<DnnClient> dnn);
+
+	void next(PlayerMove m1, SP<DnnClient> dnn);
 };
 
 

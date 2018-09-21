@@ -112,4 +112,36 @@ bool Mcts::selfNext(double temperature, SP<DnnClient> dnn) {
 }
 
 
+void Mcts::next(PlayerMove m1, SP<DnnClient> dnn) {
+	PlayerMove m0;
+	int max = 0;
+	IntMove maxIdx = -1;
+	for (IntMove j = 0; j < PlayerMove::IntCount(); j++) {
+		if (maxIdx == -1 || max < m_root->m_count[0][j]) {
+			max = m_root->m_count[0][j];
+			maxIdx = j;
+		}
+	}
+	m0 = PlayerMove::FromInt(maxIdx);
+	auto movePair = std::make_pair(m0, m1);
+	IntMoves intMoves = Node::ToInt(movePair);
+	m_rootState.forward(movePair.first, movePair.second);
+
+	if (m_rootState.isEnd()) { // ゲーム終了
+		m_root = nullptr;
+		return;
+	}
+
+	auto itr = m_root->m_next.find(intMoves);
+	if (itr == m_root->m_next.end()) { // 移動先ノードがまだ実体化されていなかった(DUCTなので起こりうる)
+		PolicyPair pp;
+		double v = dnn->Evaluate(m_rootState, pp);
+		m_root = SP<Node>(new Node(pp));
+	}
+	else {
+		m_root = itr->second;
+	}
+}
+
+
 }
