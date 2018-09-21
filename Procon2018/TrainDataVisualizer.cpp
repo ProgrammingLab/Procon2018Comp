@@ -30,11 +30,15 @@ void TrainDataVisualizer::update() {
 		m_turn--;
 		m_fv->transit(m_states[m_turn]);
 		std::cout << "turn: " << m_turn << std::endl;
+		auto p = m_states[m_turn].calcScore();
+		std::cout << "score: " << p.first - p.second << std::endl;
 	}
 	if (m_turn < (int)m_states.size() - 1 && s3d::KeyRight.down()) {
 		m_turn++;
 		m_fv->transit(m_states[m_turn]);
 		std::cout << "turn: " << m_turn << std::endl;
+		auto p = m_states[m_turn].calcScore();
+		std::cout << "score: " << p.first - p.second << std::endl;
 	}
 	m_fv->update();
 }

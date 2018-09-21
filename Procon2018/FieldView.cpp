@@ -48,7 +48,10 @@ void FieldView::update() {
 			oldPos.y*m_gridSize + m_gridSize/2
 		);
 		s3d::Vec2 p = s3d::EaseOut(s3d::Easing::Quart, start, end, t);
-		s3d::Circle(p, m_gridSize/3).draw(color).drawFrame(1, s3d::Palette::Black);
+		if ((i&1) == 0)
+			s3d::Circle(p, m_gridSize/3).draw(color).drawFrame(1, s3d::Palette::Black);
+		else
+			s3d::RectF(s3d::Arg::center(p), m_gridSize*0.9).draw(color).drawFrame(1, s3d::Palette::Black);
 	};
 
 	m_v.draw(s3d::Palette::Gray);
