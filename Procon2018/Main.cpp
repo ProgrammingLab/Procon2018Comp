@@ -38,11 +38,19 @@ void Battle() {
 	};
 
 	SP<DnnClient> dnn(new DnnClient("127.0.0.1", 54215));
-	Field first = Field::RandomState();
+	// Field first = Field::RandomState();
+	using namespace boost::property_tree;
+	std::string s;
+	std::cin >> s;
+	std::ifstream ifs(s);
+	ptree pt;
+	read_json(ifs, pt);
+	Field first = Field::FromPTree(pt.get_child("state"));
 	Mcts mcts(first, dnn);
 	PolicyPair policyPair;
 	s3d::RectF v(0, 0, s3d::Window::Size());
 	FieldView fv(v, first);
+	double q = 0;
 	while (true) {
 		s3d::Stopwatch sw;
 		sw.start();
@@ -62,12 +70,17 @@ void Battle() {
 
 			if (expands) {
 				double v = dnn->Evaluate(state, policyPair);
+				q += v;
 				mcts.backupWithExpansion(path, v, policyPair);
 			}
-			else
-				mcts.backup(path, state.value());
+			else {
+				double v = state.value();
+				q += v;
+				mcts.backup(path, v);
+			}
 		}
 		puts("");
+		q /= 1000;
 
 		std::cout << "input move... >> ";
 		std::string s, t;
