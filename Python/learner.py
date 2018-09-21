@@ -253,10 +253,13 @@ next_model_dir = './model/ckpt=%d' % (ckpt + 1)
 next_model_path = next_model_dir + ('/ckpt=%d' % (ckpt + 1))
 log_dir = next_model_dir + '/log'
 
-if sends_model == 1:
-    model_server(ckpt, model_dir, client_count, game_count)
+if os.path.isdir(train_data_dir + '/0'):
+    print('train data is found')
 else:
-    print('skip sending model')
-print('waiting train data...')
-data_server(train_data_dir, client_count*game_count)
+    if sends_model == 1:
+        model_server(ckpt, model_dir, client_count, game_count)
+    else:
+        print('skip sending model')
+    print('waiting train data...')
+    data_server(train_data_dir, client_count*game_count)
 learn(model_path, train_data_dir, next_model_path, log_dir)
