@@ -519,14 +519,14 @@ class Dnn:
             o_c = o_c_lsit[case_id]
 
             def add(agent_id, action, v):
-            trg = (p0, p1, p2, p3)[agent_id]
-            pos = positions[case_id][agent_id]
-            channel = 1 if action.is_remove else 0
-            pos_ = Pos(pos.x, pos.y)
-            if action != Action.waiting():
-                pos_.x += dx8[action.dir8]
-                pos_.y += dy8[action.dir8]
-            trg[case_id][pos_.y][pos_.x][channel] += v
+                trg = (p0, p1, p2, p3)[agent_id]
+                pos = positions[case_id][agent_id]
+                channel = 1 if action.is_remove else 0
+                pos_ = Pos(pos.x, pos.y)
+                if action != Action.waiting():
+                    pos_.x += dx8[action.dir8]
+                    pos_.y += dy8[action.dir8]
+                trg[case_id][pos_.y][pos_.x][channel] += v
 
             for i in range(Move.max_int()):
                 m = Move.from_int(i)
