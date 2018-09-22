@@ -131,8 +131,8 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
                 states.append(b.state)
                 policies0.append(policy[0])
                 policies1.append(policy[1])
-                # values.append((b.q + b.z)/2)
-                values.append(b.z)
+                values.append((b.q + b.z)/2)
+                # values.append(b.z)
             dnn.train(states, policies0, policies1, values, train_count)
             train_count += 1
         except:
