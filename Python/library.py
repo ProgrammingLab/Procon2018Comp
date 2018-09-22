@@ -279,8 +279,10 @@ class Dnn:
         self.input_dropout_rate = tf.placeholder(tf.float32, shape=[])
         self.hidden_dropout_rate = tf.placeholder(tf.float32, shape=[])
         self.x = tf.placeholder(tf.float32, shape=[None, MAX_H, MAX_W, 9])
-        self.policies0_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
-        self.policies1_ = tf.placeholder(tf.float32, shape=[None, Move.max_int()])
+        self.policies0_ = tf.placeholder(tf.float32, shape=[None, MAX_H*MAX_W*2])
+        self.policies1_ = tf.placeholder(tf.float32, shape=[None, MAX_H*MAX_W*2])
+        self.policies2_ = tf.placeholder(tf.float32, shape=[None, MAX_H*MAX_W*2])
+        self.policies3_ = tf.placeholder(tf.float32, shape=[None, MAX_H*MAX_W*2])
         self.values_ = tf.placeholder(tf.float32)
 
         x_ = self.first_res_block(self.x)
@@ -299,12 +301,19 @@ class Dnn:
         r12 = self.res_block(r11)
         self.values = self.value_out(r12)
         self.value_loss = tf.reduce_mean((self.values_ - self.values)**2)
-        (self.logits0, self.logits1) = self.policy_out(r12)
-        self.policy0 = tf.nn.softmax(self.logits0)
-        self.policy1 = tf.nn.softmax(self.logits1)
+        self.logits0 = self.policy_out(r12)
+        self.logits1 = self.policy_out(r12)
+        self.logits2 = self.policy_out(r12)
+        self.logits3 = self.policy_out(r12)
+        self.policies0 = tf.nn.softmax(self.logits0)
+        self.policies1 = tf.nn.softmax(self.logits1)
+        self.policies2 = tf.nn.softmax(self.logits2)
+        self.policies3 = tf.nn.softmax(self.logits3)
         self.policy0_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies0_, logits=self.logits0))
         self.policy1_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies1_, logits=self.logits1))
-        self.policy_loss = (self.policy0_loss + self.policy1_loss)*0.5
+        self.policy2_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies2_, logits=self.logits2))
+        self.policy3_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.policies3_, logits=self.logits3))
+        self.policy_loss = (self.policy0_loss + self.policy1_loss + self.policy2_loss + self.policy3_loss)/4.0
         # self.regularization_loss = 0.0001*tf.losses.get_regularization_loss()
         self.loss = self.value_loss + self.policy_loss #+ self.regularization_loss
         self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
@@ -340,11 +349,14 @@ class Dnn:
         saver.save(self.sess, path)
     
     def train(self, states, policies0, policies1, values, steps):
-        x = Dnn.adjust_to_dnn(states)
+        x, positions = Dnn.adjust_to_dnn(states)
+        p0_, p1_, p2_, p3_ = Dnn.adjust_policy(policies0, policies1, positions)
         feed_dict = {
             self.x: x,
-            self.policies0_: policies0,
-            self.policies1_: policies1,
+            self.policies0_: p0_,
+            self.policies1_: p1_,
+            self.policies2_: p2_,
+            self.policies3_: p3_,
             self.values_: values,
             self.is_training: True,
             self.input_dropout_rate: 0.1,
@@ -447,33 +459,14 @@ class Dnn:
         
         shape0 = relu0.get_shape().as_list()
         n0 = shape0[1]*shape0[2]*shape0[3]
-        conv = tf.layers.conv2d(
+        logits = tf.layers.conv2d(
             inputs=relu0,
             filters=2,
             kernel_size=[1,1],
             padding="same",
             kernel_initializer=Dnn.he_initializer(n0),
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        bn1 = tf.layers.batch_normalization(
-            conv,
-            training=self.is_training)
-        relu1 = tf.nn.relu(bn1)
-        dr = tf.layers.dropout(relu1, rate=self.hidden_dropout_rate)
-        n1 = MAX_H*MAX_W*2
-        dr_flat = tf.reshape(dr, [-1, n1])
-        # TODO?: he_initializeの方が良いかも
-        # ↑活性化なし=恒等関数だからxavierでいいんじゃない？
-        logits0 = tf.layers.dense(
-            dr_flat,
-            units=Move.max_int(),
-            kernel_initializer=Dnn.xavier_initializer(n1),
-            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        logits1 = tf.layers.dense(
-            dr_flat,
-            units=Move.max_int(),
-            kernel_initializer=Dnn.xavier_initializer(n1),
-            kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
-        return (logits0, logits1)
+        return tf.reshape(logits, [-1, MAX_H*MAX_W*2])
 
     def value_out(self, input):
         bn0 = tf.layers.batch_normalization(
@@ -511,9 +504,67 @@ class Dnn:
             kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=1.0))
         return tf.nn.tanh(tf.reshape(dense1, [-1]))
     @staticmethod
+    def adjust_policy(policies0, policies1, positions):
+        cases = len(policies0)
+        p0 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
+        p1 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
+        p2 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
+        p3 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
+        p0_ = np.reshape(p0, [cases, MAX_H*MAX_W*2])
+        p1_ = np.reshape(p1, [cases, MAX_H*MAX_W*2])
+        p2_ = np.reshape(p2, [cases, MAX_H*MAX_W*2])
+        p3_ = np.reshape(p3, [cases, MAX_H*MAX_W*2])
+        for case_id in range(cases):
+            o_r = o_r_list[case_id]
+            o_c = o_c_lsit[case_id]
+
+            def add(agent_id, action, v):
+            trg = (p0, p1, p2, p3)[agent_id]
+            pos = positions[case_id][agent_id]
+            channel = 1 if action.is_remove else 0
+            pos_ = Pos(pos.x, pos.y)
+            if action != Action.waiting():
+                pos_.x += dx8[action.dir8]
+                pos_.y += dy8[action.dir8]
+            trg[case_id][pos_.y][pos_.x][channel] += v
+
+            for i in range(Move.max_int()):
+                m = Move.from_int(i)
+                add(0, m.action0, policies0[case_id][i])
+                add(1, m.action1, policies0[case_id][i])
+                add(2, m.action0, policies1[case_id][i])
+                add(3, m.action1, policies1[case_id][i])
+        return p0_, p1_, p2_, p3_
+    @staticmethod
+    def unadjust_policy(p0_, p1_, p2_, p3_, positions):
+        cases = len(p0_)
+        p0 = np.reshape(p0_, [cases, MAX_H, MAX_W, 2])
+        p1 = np.reshape(p1_, [cases, MAX_H, MAX_W, 2])
+        p2 = np.reshape(p2_, [cases, MAX_H, MAX_W, 2])
+        p3 = np.reshape(p3_, [cases, MAX_H, MAX_W, 2])
+        ret0 = np.empty([cases, Move.max_int()])
+        ret1 = np.empty([cases, Move.max_int()])
+        for case_id in range(cases):
+            def get(agent_id, action):
+                pos = positions[case_id][agent_id]
+                p = (p0, p1, p2, p3)[agent_id]
+                pos_ = Pos(pos.x, pos.y)
+                channel = 1 if action.is_remove else 0
+                if action != Action.waiting():
+                    pos_.x += dx8[action.dir8]
+                    pos_.y += dy8[action.dir8]
+                return p[case_id][pos_.y][pos_.x][channel]
+            for i in range(Move.max_int()):
+                m = Move.from_int(i)
+                ret0[case_id][i] = get(0, m.action0)*get(1, m.action1)
+                ret1[case_id][i] = get(2, m.action0)*get(3, m.action1)
+        return ret0, ret1
+    @staticmethod
     def adjust_to_dnn(states):
         cases = len(states)
-        x = np.zeros([cases, MAX_H, MAX_W, 9])
+        x = np.zeros([cases, MAX_H, MAX_W, 9], dtype=float32)
+        positions = [[Pos(0, 0) for j in range(4)] for i in range(cases)]
+        
         for case_id in range(cases):
             state = states[case_id]
             
@@ -535,45 +586,42 @@ class Dnn:
             p01 = state.agent_pos[0][1]
             p10 = state.agent_pos[1][0]
             p11 = state.agent_pos[1][1]
-            if o_r + p00.y >= 12 or o_c + p00.x >= 12:
-                print('case_id: ' + str(case_id))
-                state.print()
             x[case_id][o_r + p00.y][o_c + p00.x][4] = 1.0
-            if o_r + p01.y >= 12 or o_c + p01.x >= 12:
-                print('case_id: ' + str(case_id))
-                state.print()
             x[case_id][o_r + p01.y][o_c + p01.x][5] = 1.0
-            if o_r + p10.y >= 12 or o_c + p10.x >= 12:
-                print('case_id: ' + str(case_id))
-                state.print()
             x[case_id][o_r + p10.y][o_c + p10.x][6] = 1.0
-            if o_r + p11.y >= 12 or o_c + p11.x >= 12:
-                print('case_id: ' + str(case_id))
-                state.print()
             x[case_id][o_r + p11.y][o_c + p11.x][7] = 1.0
-        return x
+            positions[case_id][0] = Pos(o_r + p00.y, o_c + p00.x)
+            positions[case_id][1] = Pos(o_r + p01.y, o_c + p01.x)
+            positions[case_id][2] = Pos(o_r + p10.y, o_c + p10.x)
+            positions[case_id][3] = Pos(o_r + p11.y, o_c + p11.x)
+
+        return x, positions
     # return: {'policy_pair': (Move, Move), 'value': float}
     # valueはプレイヤー0にとって正で、[-1, 1]
     def calc(self, state):
+        x, positions = Dnn.adjust_to_dnn([state])
         feed_dict = {
-            self.x: Dnn.adjust_to_dnn([state]),
+            self.x: x,
             self.is_training: False,
             self.input_dropout_rate: 0,
             self.hidden_dropout_rate: 0
         }
-        result = self.sess.run([self.values, self.policy0, self.policy1], feed_dict=feed_dict)
-        return {'policy_pair':(result[1][0], result[2][0]), 'value':result[0][0]}
+        result = self.sess.run([self.values, self.policies0, self.policies1, self.policies2, self.policies3], feed_dict=feed_dict)
+        pp = Dnn.unadjust_policy(result[1], result[2], result[3], result[4], positions)
+        return {'policy_pair':(pp[0][0], pp[1][0]), 'value':result[0][0]}
 
     # return: {'policy_pair': ([Move], [Move]), 'value': [float]}
     def calc_batch(self, states):
+        x, positions = Dnn.adjust_to_dnn(states)
         feed_dict = {
-            self.x: Dnn.adjust_to_dnn(states),
+            self.x: x,
             self.is_training: False,
             self.input_dropout_rate: 0,
             self.hidden_dropout_rate: 0
         }
-        result = self.sess.run([self.values, self.policy0, self.policy1], feed_dict=feed_dict)
-        return {'policy_pair':(result[1], result[2]), 'value':result[0]}
+        result = self.sess.run([self.values, self.policies0, self.policies1, self.policies2, self.policies3], feed_dict=feed_dict)
+        pp = Dnn.unadjust_policy(result[1], result[2], result[3], result[4], positions)
+        return {'policy_pair':pp, 'value':result[0]}
 
 class Node:
     # 実体化するのは訪れる時だけ（展開時は実体化まではしない）
