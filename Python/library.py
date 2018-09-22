@@ -506,18 +506,15 @@ class Dnn:
     @staticmethod
     def adjust_policy(policies0, policies1, positions):
         cases = len(policies0)
-        p0 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
-        p1 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
-        p2 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
-        p3 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float32)
+        p0 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float)
+        p1 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float)
+        p2 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float)
+        p3 = np.zeros([cases, MAX_H, MAX_W, 2], dtype=float)
         p0_ = np.reshape(p0, [cases, MAX_H*MAX_W*2])
         p1_ = np.reshape(p1, [cases, MAX_H*MAX_W*2])
         p2_ = np.reshape(p2, [cases, MAX_H*MAX_W*2])
         p3_ = np.reshape(p3, [cases, MAX_H*MAX_W*2])
         for case_id in range(cases):
-            o_r = o_r_list[case_id]
-            o_c = o_c_lsit[case_id]
-
             def add(agent_id, action, v):
                 trg = (p0, p1, p2, p3)[agent_id]
                 pos = positions[case_id][agent_id]
@@ -542,8 +539,8 @@ class Dnn:
         p1 = np.reshape(p1_, [cases, MAX_H, MAX_W, 2])
         p2 = np.reshape(p2_, [cases, MAX_H, MAX_W, 2])
         p3 = np.reshape(p3_, [cases, MAX_H, MAX_W, 2])
-        ret0 = np.empty([cases, Move.max_int()])
-        ret1 = np.empty([cases, Move.max_int()])
+        ret0 = np.empty([cases, Move.max_int()], dtype=float)
+        ret1 = np.empty([cases, Move.max_int()], dtype=float)
         for case_id in range(cases):
             def get(agent_id, action):
                 pos = positions[case_id][agent_id]
@@ -562,7 +559,7 @@ class Dnn:
     @staticmethod
     def adjust_to_dnn(states):
         cases = len(states)
-        x = np.zeros([cases, MAX_H, MAX_W, 9], dtype=float32)
+        x = np.zeros([cases, MAX_H, MAX_W, 9], dtype=float)
         positions = [[Pos(0, 0) for j in range(4)] for i in range(cases)]
         
         for case_id in range(cases):
