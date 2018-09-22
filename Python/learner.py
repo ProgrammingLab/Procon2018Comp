@@ -109,7 +109,7 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
             break
         try:
             sys.stdout.write('\rtrainStep: %d' % train_count)
-            batch = np.random.choice(train_data_list, 256, replace=False)
+            batch = np.random.choice(train_data_list, 128, replace=False)
             batch2 = []
             for v in batch:
                 batch2.append(v)
