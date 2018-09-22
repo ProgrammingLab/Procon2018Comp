@@ -73,7 +73,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 		std::vector<Field> states;
 		std::vector<int> idx;
 		std::vector<bool> needExpansion;
-		std::vector<double> qs;
+		std::vector<double> qs(n, 0.0);
 
 		// DNNの評価の対象となるゲームの数分の長さ
 		std::vector<Field> needDnn;
@@ -94,8 +94,6 @@ void SelfPlay(int gameCount, std::string outputIp) {
 			idx.resize(n);
 			needExpansion.clear();
 			needExpansion.resize(n);
-			qs.clear();
-			qs.resize(n, 0.0);
 			needDnn.clear();
 			policies.clear();
 			values.clear();
