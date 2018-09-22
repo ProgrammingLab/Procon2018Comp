@@ -73,6 +73,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 		std::vector<Field> states;
 		std::vector<int> idx;
 		std::vector<bool> needExpansion;
+		std::vector<double> qs;
 
 		// DNNの評価の対象となるゲームの数分の長さ
 		std::vector<Field> needDnn;
@@ -93,6 +94,8 @@ void SelfPlay(int gameCount, std::string outputIp) {
 			idx.resize(n);
 			needExpansion.clear();
 			needExpansion.resize(n);
+			qs.clear();
+			qs.resize(n, 0.0);
 			needDnn.clear();
 			policies.clear();
 			values.clear();
@@ -122,25 +125,21 @@ void SelfPlay(int gameCount, std::string outputIp) {
 				for (int i = 0; i < n; i++) {
 					if (needExpansion[i]) {
 						tp[i].second.backupWithExpansion(paths[i], values[idx[i]], policies[idx[i]]);
+						qs[i] += values[idx[i]];
 					}
 					else {
 						tp[i].second.backup(paths[i], v[i]);
+						qs[i] += v[i];
 					}
 				}
 			}
 		}
 
 		for (int i = 0; i < n; i++) {
-			double q = 0;
+			qs[i] /= 1000;
 			SP<Node> node = tp[i].second.root();
-			for (int j = 0; j < 2; j++) {
-				for (int k = 0; k < PlayerMove::IntCount(); k++) {
-					q += node->m_w[j][k];
-				}
-				q /= tp[i].second.root()->m_countSum;
-			}
 			Field s = tp[i].second.copyRootState();
-			logs[tp[i].first].push_back(Log(s, q, node->m_count));
+			logs[tp[i].first].push_back(Log(s, qs[i], node->m_count));
 			
 			double t = std::min(0.5, 0.5*s.resTurn()/30.0);
 			tp[i].second.selfNext(t, dnn);
