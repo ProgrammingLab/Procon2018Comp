@@ -523,6 +523,8 @@ class Dnn:
                 if action != Action.waiting():
                     pos_.x += dx8[action.dir8]
                     pos_.y += dy8[action.dir8]
+                if pos_.x < 0 or MAX_W <= pos_.x or pos_.y < 0 or MAX_H <= pos_.y:
+                    return
                 trg[case_id][pos_.y][pos_.x][channel] += v
 
             for i in range(Move.max_int()):
@@ -550,6 +552,8 @@ class Dnn:
                 if action != Action.waiting():
                     pos_.x += dx8[action.dir8]
                     pos_.y += dy8[action.dir8]
+                if pos_.x < 0 or MAX_W <= pos_.x or pos_.y < 0 or MAX_H <= pos_.y:
+                    return 0.0
                 return p[case_id][pos_.y][pos_.x][channel]
             for i in range(Move.max_int()):
                 m = Move.from_int(i)
