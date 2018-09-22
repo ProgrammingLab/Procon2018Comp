@@ -312,6 +312,24 @@ bool Field::forward(const OptAction& a0,
 			}
 		}
 	}
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < i; j++) {
+			// 念の為もう一回やっておく
+			if (pos[j] == pos[i]) {
+				pos[i] = m_agent[i];
+				pos[j] = m_agent[j];
+			}
+		}
+	}
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < i; j++) {
+			// 念の為更にもう一回やっておく（連鎖的に無効になるケースを考慮）
+			if (pos[j] == pos[i]) {
+				pos[i] = m_agent[i];
+				pos[j] = m_agent[j];
+			}
+		}
+	}
 
 	// 除去処理
 	for (int i = 0; i < 4; i++) {
