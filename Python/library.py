@@ -591,10 +591,10 @@ class Dnn:
             x[case_id][o_r + p01.y][o_c + p01.x][5] = 1.0
             x[case_id][o_r + p10.y][o_c + p10.x][6] = 1.0
             x[case_id][o_r + p11.y][o_c + p11.x][7] = 1.0
-            positions[case_id][0] = Pos(o_r + p00.y, o_c + p00.x)
-            positions[case_id][1] = Pos(o_r + p01.y, o_c + p01.x)
-            positions[case_id][2] = Pos(o_r + p10.y, o_c + p10.x)
-            positions[case_id][3] = Pos(o_r + p11.y, o_c + p11.x)
+            positions[case_id][0] = Pos(o_c + p00.x, o_r + p00.y)
+            positions[case_id][1] = Pos(o_c + p01.x, o_r + p01.y)
+            positions[case_id][2] = Pos(o_c + p10.x, o_r + p10.y)
+            positions[case_id][3] = Pos(o_c + p11.x, o_r + p11.y)
 
         return x, positions
     # return: {'policy_pair': (Move, Move), 'value': float}
