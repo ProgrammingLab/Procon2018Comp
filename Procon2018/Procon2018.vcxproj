@@ -199,6 +199,7 @@
   <ItemGroup>
     <ClCompile Include="FieldView.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Playground.cpp" />
     <ClCompile Include="Shared\DnnClient.cpp" />
     <ClCompile Include="Shared\Field.cpp" />
     <ClCompile Include="Shared\Mcts.cpp" />
@@ -267,6 +268,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FieldView.h" />
+    <ClInclude Include="Playground.h" />
     <ClInclude Include="Shared\DnnClient.h" />
     <ClInclude Include="Shared\Field.h" />
     <ClInclude Include="Shared\Mcts.h" />

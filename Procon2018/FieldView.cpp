@@ -14,6 +14,13 @@ s3d::Color FieldView::gridColor(const Point & pos) const {
 	throw "エッ";
 }
 
+s3d::Vec2 FieldView::gridCenter(const Point & pos) const {
+	return m_v.tl() + s3d::Vec2(
+		pos.x*m_gridSize + m_gridSize/2,
+		pos.y*m_gridSize + m_gridSize/2
+	);
+}
+
 FieldView::FieldView(const s3d::RectF & viewport, const Field &fld)
 : m_v(viewport)
 , m_fld(fld)
@@ -39,19 +46,13 @@ void FieldView::update() {
 		Point oldPos = m_oldPlayerPos[i];
 		PlayerId team = m_fld.teamOf((AgentId)i);
 		s3d::Color color = team == PlayerId::B ? s3d::Palette::Red : s3d::Palette::Blue;
-		s3d::Vec2 end = m_v.tl() + s3d::Vec2(
-			currentPos.x*m_gridSize + m_gridSize/2,
-			currentPos.y*m_gridSize + m_gridSize/2
-		);
-		s3d::Vec2 start = m_v.tl() + s3d::Vec2(
-			oldPos.x*m_gridSize + m_gridSize/2,
-			oldPos.y*m_gridSize + m_gridSize/2
-		);
+		s3d::Vec2 end = gridCenter(currentPos);
+		s3d::Vec2 start = gridCenter(oldPos);
 		s3d::Vec2 p = s3d::EaseOut(s3d::Easing::Quart, start, end, t);
 		if ((i&1) == 0)
 			s3d::Circle(p, m_gridSize/3).draw(color).drawFrame(1, s3d::Palette::Black);
 		else
-			s3d::RectF(s3d::Arg::center(p), m_gridSize*0.9).draw(color).drawFrame(1, s3d::Palette::Black);
+			s3d::RectF(s3d::Arg::center(p), m_gridSize*0.6).draw(color).drawFrame(1, s3d::Palette::Black);
 	};
 
 	m_v.draw(s3d::Palette::Gray);

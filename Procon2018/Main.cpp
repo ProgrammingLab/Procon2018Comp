@@ -2,6 +2,7 @@
 #include "TrainDataVisualizer.h"
 #include "Shared/DnnClient.h"
 #include "Shared/Mcts.h"
+#include "Playground.h"
 
 
 namespace Procon2018 {
@@ -92,6 +93,13 @@ void Battle() {
 	}
 }
 
+void HumanPlay() {
+	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()));
+	while (s3d::System::Update()) {
+		grd.update();
+	}
+}
+
 
 }
 
@@ -104,7 +112,8 @@ void Main()
 	s3d::Console.open();
 
 	//TrainDataVisualize();
-	Battle();
+	//Battle();
+	HumanPlay();
 
 	/*
 	using namespace boost::property_tree;

@@ -8,6 +8,12 @@ namespace Procon2018 {
 class FieldView {
 private:
 
+	s3d::Color m_oldColor[Field::MAX_H][Field::MAX_W];
+
+	Point m_oldPlayerPos[4];
+
+protected:
+
 	s3d::RectF m_v;
 
 	Field m_fld;
@@ -20,12 +26,10 @@ private:
 
 	s3d::Stopwatch m_sw;
 
-	s3d::Color m_oldColor[Field::MAX_H][Field::MAX_W];
-
-	Point m_oldPlayerPos[4];
-
 
 	s3d::Color gridColor(const Point &pos) const;
+
+	s3d::Vec2 gridCenter(const Point &pos) const;
 
 public:
 	
