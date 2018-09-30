@@ -62,7 +62,10 @@ void SelfPlay(int gameCount, std::string outputIp) {
 		std::cout << "turn: " << globalTurn << std::endl;
 		std::vector<std::pair<int, Mcts&>> tp;
 		for (int i = 0; i < gameCount; i++) {
-			if (!trees[i].isEnd()) tp.push_back(std::pair<int, Mcts&>(i, trees[i]));
+			if (!trees[i].isEnd()) {
+				trees[i].addNoise();
+				tp.push_back(std::pair<int, Mcts&>(i, trees[i]));
+			}
 		}
 		int n = (int)tp.size();
 		if (n == 0) break;
@@ -102,7 +105,7 @@ void SelfPlay(int gameCount, std::string outputIp) {
 #pragma omp for
 				for (int i = 0; i < n; i++) {
 					states[i] = tp[i].second.copyRootState();
-					needExpansion[i] = !tp[i].second.goDown(states[i], paths[i]);
+					needExpansion[i] = !tp[i].second.goDown(states[i], paths[i], true);
 					if (!needExpansion[i]) {
 						idx[i] = -1;
 						v[i] = states[i].value(); // GAME NO OWARI
@@ -236,7 +239,7 @@ void MctsTest() {
 	Field first(2, 4, 5, fld, agent);*/
 
 	using namespace boost::property_tree;
-	std::ifstream ifs(R"(C:\Users\winG3\Downloads\0.json)");
+	std::ifstream ifs(R"(C:\Users\winG3\Downloads\45.json)");
 	ptree pt;
 	read_json(ifs, pt);
 	Field first = Field::FromPTree(pt.get_child("state"));
@@ -248,7 +251,7 @@ void MctsTest() {
 		std::cout << i << std::endl;
 		Field state = mcts.copyRootState();
 		std::vector<IntMoves> path;
-		bool expands = !mcts.goDown(state, path);
+		bool expands = !mcts.goDown(state, path, i < 600);
 
 		if (expands) {
 			double v = dnn->Evaluate(state, policyPair);
@@ -259,30 +262,31 @@ void MctsTest() {
 	}
 
 	// debug output
-	/*SP<Node> root = mcts.root();
+	SP<Node> root = mcts.root();
 	for (IntMove i = 0; i < PlayerMove::IntCount(); i++) {
-	auto show = [](const OptAction &a) {
-	if (!a) return std::string("..");
-	std::string ret = (a.value().type == ActionType::Move ? "m" : "r");
-	ret += std::to_string((int)a.value().dir);
-	return ret;
-	};
-	int p0 = root->m_count[0][(int)i];
-	int p1 = root->m_count[1][(int)i];
-	PlayerMove move = PlayerMove::FromInt(i);
-	std::cout << "(" + show(move.a0) + "," << show(move.a1) << ") : (" << p0 << "," << p1 << ")" << std::endl;
-	}*/
+		auto show = [](const OptAction &a) {
+			if (!a) return std::string("..");
+			std::string ret = (a.value().type == ActionType::Move ? "m" : "r");
+			ret += std::to_string((int)a.value().dir);
+			return ret;
+		};
+		int p0 = root->m_count[0][(int)i];
+		int p1 = root->m_count[1][(int)i];
+		PlayerMove move = PlayerMove::FromInt(i);
+		std::cout << "(" + show(move.a0) + "," << show(move.a1) << ") : (" << p0 << "," << p1 << ")" << std::endl;
+	}
 
 	//mcts.selfNext(0, dnn);
-	for (int i = 0; i < 2; i++) {
-		for (IntMove j = 0; j < PlayerMove::IntCount(); j++) {
-			std::cout << (int)j << ": " << first.checkAllValid((PlayerId)i, PlayerMove::FromInt(j)) << std::endl;
-		}
-	}
+	//for (int i = 0; i < 2; i++) {
+	//	for (IntMove j = 0; j < PlayerMove::IntCount(); j++) {
+	//		std::cout << (int)j << ": " << first.checkAllValid((PlayerId)i, PlayerMove::FromInt(j)) << std::endl;
+	//	}
+	//}
 }
 
 int main(int argc, char* argv[])
 {
+	//MctsTest();
 	// /*
 	using namespace Procon2018;
 	Rand::InitializeWithTime();

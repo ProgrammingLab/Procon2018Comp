@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from library import *
+from tcpLib import *
 import sys
 import os
 import argparse
@@ -41,6 +41,6 @@ while True:
         with open(model_dir + '/' + header['modelFiles'][i], 'wb') as f:
             f.write(b)
     
-    proc = subprocess.Popen(['python', 'dnnServer.py', model_path], stdout=subprocess.PIPE)
-    subprocess.run(['SelfPlay_win.exe', str(game_count), args.learner_ip])
+    proc = subprocess.Popen(['python', model_dir + '/dnnServer.py', './' + model_path], stdout=subprocess.PIPE)
+    subprocess.run([model_dir + '/SelfPlay_win.exe', str(game_count), args.learner_ip])
     proc.kill()

@@ -27,13 +27,15 @@ public:
 
 	bool isEnd() const;
 
+	void addNoise();
+
 	// fieldは変更され, 最終的に, 評価が必要な盤面になる
 	// pathに, 後のbackupで使う経路が根から順に入る
 	// return: fieldがゲーム終了状態ならtrue
 	// nodeがnullなら何もしない
-	bool goDown(SP<Node> node, Field &field, std::vector<IntMoves> &path);
+	bool goDown(SP<Node> node, Field &field, std::vector<IntMoves> &path, bool kiresou = false);
 
-	bool goDown(Field &field, std::vector<IntMoves> &path);
+	bool goDown(Field &field, std::vector<IntMoves> &path, bool kiresou = false);
 
 	// 評価結果vをバックアップ
 	void backupWithExpansion(const std::vector<IntMoves> &path, double v, const PolicyPair &policyPair);

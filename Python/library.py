@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from tcpLib import *
 import numpy as np
 import tensorflow as tf
 import math
@@ -150,11 +151,11 @@ class State:
                         val[i] += self.fld[y][x].score
                     if res[y + 1][x + 1] and self.fld[y][x].color == 0:
                         val[i] += abs(self.fld[y][x].score)
-        if val[0] > val[1]:
-            return 1
-        if val[0] < val[1]:
-            return -1
-        return 0
+        all = 0
+        for y in range(h):
+            for x in range(w):
+                all += abs(self.fld[y][x].score)
+        return np.tanh(10*(val[0] - val[1])/all)
     def valid_action(self, player_id, agent_id, action):
         if action == Action.waiting():
             return True
@@ -275,6 +276,7 @@ class Move:
 
 class Dnn:
     def __init__(self, model_path, log_dir=None):
+        self.learning_rate = tf.Variable(1e-2)
         self.is_training = tf.placeholder(tf.bool, shape=[])
         self.input_dropout_rate = tf.placeholder(tf.float32, shape=[])
         self.hidden_dropout_rate = tf.placeholder(tf.float32, shape=[])
@@ -316,12 +318,10 @@ class Dnn:
         self.policy_loss = (self.policy0_loss + self.policy1_loss + self.policy2_loss + self.policy3_loss)/4.0
         # self.regularization_loss = 0.0001*tf.losses.get_regularization_loss()
         self.loss = self.value_loss + self.policy_loss #+ self.regularization_loss
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
-
+        self.optimizer = tf.train.MomentumOptimizer(self.learning_rate, 0.9)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             self.train_op = self.optimizer.minimize(self.loss)
-        
 
         config = tf.ConfigProto(
             log_device_placement=False,
@@ -343,6 +343,9 @@ class Dnn:
             tf.train.Saver().restore(self.sess, model_path)
         else:
             self.sess.run(tf.global_variables_initializer())
+    
+    def setLearningRate(self, learning_rate):
+        self.sess.run(self.learning_rate.assign(learning_rate))
     
     def save(self, path):
         saver = tf.train.Saver()
@@ -767,11 +770,12 @@ def to_state(state_json):
 
     
 class TrainingData:
-    def __init__(self, state, visit_counts, q, z):
+    def __init__(self, state, visit_counts, q, z, z_):
         self.state = state
         self.visit_counts = visit_counts
         self.q = q
         self.z = z
+        self.z_ = z_
     def to_json(self):
         js = collections.OrderedDict()
         js['state'] = self.state.to_json()
@@ -783,36 +787,3 @@ class TrainingData:
                 v[i][j] = str(self.visit_counts[i][j])
         js['visitCount'] = v
         return js
-
-def myreceive(socket, byte_size):
-    chunks = []
-    cnt = byte_size
-    while cnt > 0:
-        chunk = socket.recv(cnt)
-        if chunk == b'':
-            raise RuntimeError("connection broken")
-        chunks.append(chunk)
-        cnt -= len(chunk)
-    return b''.join(chunks)
-
-def mysend(socket, msg):
-    totalsent = 0
-    while totalsent < len(msg):
-        sent = socket.send(msg[totalsent:])
-        if sent == 0:
-            raise RuntimeError("connection broken")
-        totalsent = totalsent + sent
-    # print('totalsent: ' + str(totalsent))
-
-# 先頭に10バイトの長さ情報を含んだプロトコル
-def mysend_with_sign(sock, msg):
-    sign = bytearray(str(len(msg)).encode('ascii'))
-    while len(sign) < 10:
-        sign.extend(' '.encode('ascii'))
-    mysend(sock, sign)
-    mysend(sock, msg)
-
-# 先頭に10バイトの長さ情報を含んだプロトコル
-def myreceive_with_sign(sock):
-    size = int(myreceive(sock, 10).decode('ascii'))
-    return myreceive(sock, size)

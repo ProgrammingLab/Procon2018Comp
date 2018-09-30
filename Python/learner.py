@@ -8,6 +8,7 @@ import numpy as np
 import argparse
 import collections
 import shutil
+import subprocess
 
 def to_train_data(json):
     state = to_state(json['state'])
@@ -17,7 +18,7 @@ def to_train_data(json):
     for i in range(2):
         for j in range(Move.max_int()):
             visit_counts[i][j] = int(json['visitCount'][i][j])
-    return TrainingData(state, visit_counts, q, z)
+    return TrainingData(state, visit_counts, q, z, state.evaluate_end())
 
 def swap_action(int_move):
     m = Move.from_int(int_move)
@@ -103,10 +104,15 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
         return
     print(str(len(train_data_list)) + ' train data is here!')
     dnn = Dnn(model_path, log_dir=log_dir)
+    dnn.setLearningRate(1e-2)
     train_count = 0
     while True:
-        if train_count == 3000:
+        if train_count == 700:
             break
+        if train_count == 300:
+            dnn.setLearningRate(1e-3)
+        if train_count == 500:
+            dnn.setLearningRate(1e-4)
         try:
             sys.stdout.write('\rtrainStep: %d' % train_count)
             batch = np.random.choice(train_data_list, 128, replace=False)
@@ -131,8 +137,14 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
                 states.append(b.state)
                 policies0.append(policy[0])
                 policies1.append(policy[1])
-                values.append((b.q + b.z)/2)
+                w = 0
+                if b.z > 0:
+                    w = 1
+                elif b.z < 0:
+                    w = -1
+                values.append((w + b.z)/2)
                 # values.append(b.z)
+                # values.append(((b.z + b.z_)/2 + b.q)/2)
             dnn.train(states, policies0, policies1, values, train_count)
             train_count += 1
         except:
@@ -143,6 +155,12 @@ def learn(model_path, train_data_path, out_model_path, log_dir):
 def model_server(ckpt, model_dir, client_count, game_count):
     if client_count == 0:
         return
+    
+    shutil.copy2('tcpLib.py', model_dir)
+    shutil.copy2('library.py', model_dir)
+    shutil.copy2('SelfPlay_win.exe', model_dir)
+    shutil.copy2('dnnServer.py', model_dir)
+
     model_data = []
     header = collections.OrderedDict()
     header['modelFiles'] = []

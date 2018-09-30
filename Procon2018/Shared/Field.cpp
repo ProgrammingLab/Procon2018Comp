@@ -362,23 +362,26 @@ bool Field::checkAllValid(const OptAction& a0,
 bool Field::isBad(AgentId agentId, const Action & a) const {
 	Point next = m_agent[(int)agentId] + Neighbour8(a.dir);
 	if (outOfField(next)) return true;
-	if (auto &c = m_field[next.y][next.x].color)
+	if (auto &c = m_field[next.y][next.x].color) {
 		if (c.value() == teamOf(agentId)) return true;
+	}
+	else if (m_field[next.y][next.x].score < 0) return true;
 	return false;
 }
 
 bool Field::isBad(PlayerId playerId, const PlayerMove & m) const {
 	AgentId i0 = (AgentId)((int)playerId*2);
 	AgentId i1 = (AgentId)((int)playerId*2 + 1);
-	if (m.a0 && isBad(i0, m.a0.value())) return true;
-	if (m.a1 && isBad(i1, m.a1.value())) return true;
+	if (!m.a0 || !m.a1) return true;
+	if (isBad(i0, m.a0.value())) return true;
+	if (isBad(i1, m.a1.value())) return true;
 	return false;
 }
 
 bool Field::isBad(const PlayerMove & m0, const PlayerMove & m1) const {
 	const OptAction* v[4] = {&m0.a0, &m0.a1, &m1.a0, &m1.a1 };
 	for (int i = 0; i < 4; i++) {
-		if (!*v[i]) continue;
+		if (!*v[i]) return true;
 		if (isBad((AgentId)i, v[i]->value())) return true;
 	}
 	return false;
@@ -395,6 +398,13 @@ bool Field::checkAllValid(const PlayerMove & m0, const PlayerMove & m1) const {
 bool Field::checkAllValid(PlayerId playerId, const PlayerMove & m) const {
 	AgentId i0 = (AgentId)((int)playerId*2);
 	AgentId i1 = (AgentId)((int)playerId*2 + 1);
+	auto trg = [&](AgentId aid, const OptAction &a) {
+		Point trg = m_agent[(int)aid];
+		if (a) trg += Neighbour8(a->dir);
+		return trg;
+	};
+	if (trg(i0, m.a0) == trg(i1, m.a1)) //味方同士で何しとんねん
+		return false;
 	return (!m.a0 || checkValid(i0, m.a0.value())) && (!m.a1 || checkValid(i1, m.a1.value()));
 }
 

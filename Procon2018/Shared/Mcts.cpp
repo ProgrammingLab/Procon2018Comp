@@ -24,10 +24,18 @@ bool Mcts::isEnd() const {
 	return m_rootState.isEnd();
 }
 
-bool Mcts::goDown(SP<Node> node, Field &field, std::vector<IntMoves>& path) {
+void Mcts::addNoise() {
+	if (!m_root) return;
+	for (int i = 0; i < 2; i++) {
+		IntMove j = Rand::Next(PlayerMove::IntCount());
+		m_root->m_policyPair[i][j] += 1.0;
+	}
+}
+
+bool Mcts::goDown(SP<Node> node, Field &field, std::vector<IntMoves>& path, bool kiresou) {
 	if (node == nullptr) return false;
 
-	IntMoves moveId = node->decideMoves(field);
+	IntMoves moveId = node->decideMoves(field, kiresou);
 	auto movePair = Node::ToMoves(moveId);
 	field.forward(movePair.first, movePair.second);
 	path.push_back(moveId);
@@ -38,11 +46,11 @@ bool Mcts::goDown(SP<Node> node, Field &field, std::vector<IntMoves>& path) {
 	auto next = node->m_next.find(moveId);
 	if (next == node->m_next.end()) return false;
 
-	return goDown(next->second, field, path);
+	return goDown(next->second, field, path, kiresou);
 }
 
-bool Mcts::goDown(Field & field, std::vector<IntMoves>& path) {
-	return goDown(m_root, field, path);
+bool Mcts::goDown(Field & field, std::vector<IntMoves>& path, bool kiresou) {
+	return goDown(m_root, field, path, kiresou);
 }
 
 void Mcts::backupWithExpansion(const std::vector<IntMoves>& path, double v, const PolicyPair & policyPair) {

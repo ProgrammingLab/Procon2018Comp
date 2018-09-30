@@ -36,9 +36,9 @@ public: // 強引なpublicは天才プログラマの特権 #アゲてこうぜ 
 	// 実体化するのは訪れる時だけ (展開時は実体化まではしない)
 	Node(const PolicyPair &policyPair);
 
-	IntMove decideMove(PlayerId playerId, const Field &field) const;
+	IntMove decideMove(PlayerId playerId, const Field &field, bool kiresou = false) const;
 
-	IntMoves decideMoves(const Field &field) const;
+	IntMoves decideMoves(const Field &field, bool kiresou = false) const;
 
 	void backup(IntMoves i, double v);
 };
