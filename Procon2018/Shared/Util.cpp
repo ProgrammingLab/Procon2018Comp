@@ -3,10 +3,46 @@
 namespace Procon2018 {
 
 
+namespace asio = boost::asio;
+using asio::ip::tcp;
+using namespace boost::property_tree;
+
+
 Point Neighbour8(Direction8 dir) {
 	int dx[8] = {1, 0, -1, -1, -1, 0, 1, 1};
 	int dy[8] = {1, 1, 1, 0, -1, -1, -1, 0};
 	return Point(dx[dir], dy[dir]);
+}
+
+int toInt(const std::string & s) {
+	int i;
+	std::stringstream(s) >> i;
+	return i;
+}
+
+void sendJson(boost::asio::ip::tcp::socket & socket, const boost::property_tree::ptree & sent) {
+	std::stringstream ss;
+	write_json(ss, sent);
+	std::string body = ss.str();
+	std::string sign = std::to_string(body.size()*sizeof(char));
+	if (sign.size() > 10) throw "too large";
+	while (sign.size() < 10) sign.push_back(' ');
+	asio::write(socket, asio::buffer(sign)); //データの長さの10バイト文字列表現
+	asio::write(socket, asio::buffer(body)); //自動で全部送るらしい
+}
+
+boost::property_tree::ptree receiveJson(boost::asio::ip::tcp::socket & socket) {
+	asio::streambuf signBuffer;
+	asio::read(socket, signBuffer, asio::transfer_exactly(10));
+	int size = toInt( asio::buffer_cast<const char*>(signBuffer.data()) );
+	asio::streambuf bodyBuffer;
+	asio::read(socket, bodyBuffer, asio::transfer_exactly(size));
+	std::string bodyStr = std::string(asio::buffer_cast<const char*>(bodyBuffer.data()));
+	bodyStr.resize(size); // ごみデータが入ることがあるので切り詰める
+	std::stringstream jsonData(bodyStr);
+	ptree received;
+	read_json(jsonData, received);
+	return std::move(received);
 }
 
 

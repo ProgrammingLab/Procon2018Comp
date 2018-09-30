@@ -44,21 +44,8 @@ std::vector<double> DnnClient::Evaluate(const std::vector<Field>& field, std::ve
 		}
 		sent.add_child("states", states);
 	}
-	{
-		std::stringstream ss;
-		write_json(ss, sent);
-		std::string body = ss.str();
-		std::string sign = std::to_string(body.size()*sizeof(char));
-		if (sign.size() > 10) throw "too large";
-		while (sign.size() < 10) sign.push_back(' ');
-		asio::write(m_socket, asio::buffer(sign)); //データの長さの10バイト文字列表現
-		asio::write(m_socket, asio::buffer(body)); //自動で全部送るらしい
-	}
-	auto toInt = [](const std::string& s) {
-		int i;
-		std::stringstream(s) >> i;
-		return i;
-	};
+	sendJson(m_socket, sent);
+
 	auto toDouble = [](const std::string& s) {
 		double d;
 		std::stringstream(s) >> d;
@@ -66,16 +53,7 @@ std::vector<double> DnnClient::Evaluate(const std::vector<Field>& field, std::ve
 	};
 	std::vector<double> ret;
 	{
-		asio::streambuf signBuffer;
-		asio::read(m_socket, signBuffer, asio::transfer_exactly(10));
-		int size = toInt( asio::buffer_cast<const char*>(signBuffer.data()) );
-		asio::streambuf bodyBuffer;
-		asio::read(m_socket, bodyBuffer, asio::transfer_exactly(size));
-		std::string bodyStr = std::string(asio::buffer_cast<const char*>(bodyBuffer.data()));
-		bodyStr.resize(size); // ごみデータが入ることがあるので切り詰める
-		std::stringstream jsonData(bodyStr);
-		ptree received;
-		read_json(jsonData, received);
+		ptree received = receiveJson(m_socket);
 
 		int n = (int)received.get_child("result").size();
 		res.resize(n);

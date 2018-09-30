@@ -84,4 +84,11 @@ public:
 };
 
 
+int toInt(const std::string &s);
+
+void sendJson(boost::asio::ip::tcp::socket &socket, const boost::property_tree::ptree &ptree);
+
+boost::property_tree::ptree receiveJson(boost::asio::ip::tcp::socket &socket);
+
+
 }
