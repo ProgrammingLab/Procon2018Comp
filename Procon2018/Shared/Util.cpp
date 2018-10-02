@@ -58,6 +58,9 @@ void Rand::InitializeWithTime() {
 	//cout << t.count() << " ms" << endl;
 	w = t.count() % UINT_MAX;
 	//cout << w << endl;
+	for (int i = 0; i < 20; i++) {
+		Next(1);
+	}
 }
 
 int Rand::Next(int start, int end) {
