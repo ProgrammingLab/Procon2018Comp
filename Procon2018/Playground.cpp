@@ -58,13 +58,15 @@ void Playground::update() {
 				dir = (Direction8)i;
 			}
 		}
-		if (base.distanceFrom(mousePos) < min)
+		bool l = s3d::MouseL.up(), r = s3d::MouseR.up();
+		if (base.distanceFrom(mousePos) < min) {
+			if (l || r) m_dragState.reset();
 			return;
+		}
 		Point gp = m_fld.agentPos(m_dragState->selected) + Neighbour8((Direction8)dir);
 		s3d::RectF(m_v.tl() + s3d::Vec2(gp.x*m_gridSize, gp.y*m_gridSize), m_gridSize)
 			.drawShadow({0, 0}, 20, 7, s3d::Color(color, 100));
 
-		bool l = s3d::MouseL.up(), r = s3d::MouseR.up();
 		if (!l && !r) return;
 		m_actions[(int)m_dragState->selected] = std::make_optional(Action(m_dragState->type, dir));
 		m_dragState.reset();
