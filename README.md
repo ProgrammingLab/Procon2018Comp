@@ -13,6 +13,10 @@
 - AI: C++
 - C++のコードは全てVisual Studioにより管理している
 
+## バイナリファイル
+- https://github.com/ProgrammingLab/Procon2018Comp/releases/tag/1.0
+    - AIと対戦できる
+
 ## 主なディレクトリ構成
 - `./Procon2018/` UIやAIを含む中心的なプロジェクト。Windowsでの実行を想定
 - `./Procon2018/FieldView.h, FieldView.cpp, Playground.h, Playground.cpp` **UIのコード**  
