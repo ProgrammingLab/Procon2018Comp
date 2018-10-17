@@ -110,9 +110,13 @@ public:
 
 	const Grid& grid(const Point &pos) const;
 
+	void setColor(const Point &pos, const std::optional<PlayerId> &color);
+
+	void setPos(AgentId agentId, const Point &pos);
+
 	const Point& agentPos(AgentId agentId) const;
 
-	PlayerId teamOf(AgentId agentId) const;
+	PlayerId playerOf(AgentId agentId) const;
 
 	bool outOfField(const Point &pos) const;
 

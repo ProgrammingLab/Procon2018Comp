@@ -3,6 +3,7 @@
 #include "Shared/DnnClient.h"
 #include "Shared/Mcts.h"
 #include "Playground.h"
+#include "WinjAI/WinjAI.h"
 
 
 namespace Procon2018 {
@@ -29,7 +30,7 @@ void TrainDataVisualize() {
 	}
 }
 
-void Battle() {
+void BattleToDnn() {
 	auto toMove = [](const std::string &s) {
 		if (s[0] == 'x') return OptAction();
 		ActionType type = ActionType::Move;
@@ -100,6 +101,15 @@ void HumanPlay() {
 	}
 }
 
+void BattleToWinjAI() {
+	SP<AI> winjAI((AI*)new WinjAI::WinjAI());
+	SP<AI> winjAI2((AI*)new WinjAI::WinjAI());
+	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()), winjAI, nullptr);
+	while (s3d::System::Update()) {
+		grd.update();
+	}
+}
+
 
 }
 
@@ -113,32 +123,7 @@ void Main()
 	Rand::InitializeWithTime();
 
 	//TrainDataVisualize();
-	//Battle();
-	HumanPlay();
-
-	/*
-	using namespace boost::property_tree;
-	std::ifstream ifs("2.json");
-
-	auto toStr = [](OptAction a) {
-		if (!a) return std::string("  ");
-		std::string s = a->type == ActionType::Move ? "m" : "r";
-		return s + std::to_string(a->dir);
-	};
-	ptree pt;
-	read_json(ifs, pt);
-	Field state = Field::FromPTree(pt.get_child("state"));
-	DnnClient dnn("127.0.0.1", 54215);
-	PolicyPair pp;
-	double v = dnn.Evaluate(state, pp);
-	std::cout << "value: " << v << std::endl;
-	for (int i = 0; i < 2; i++) {
-		std::cout << std::endl;
-		for (int j = 0; j < PlayerMove::IntCount(); j++) {
-			PlayerMove m = PlayerMove::FromInt(j);
-			std::cout << j << "(" << toStr(m.a0) << "," << toStr(m.a1) << "): " << pp[i][j] << std::endl;
-		}
-	}
-	std::cout << state.value() << std::endl;
-	*/
+	//BattleToDnn();
+	//HumanPlay();
+	BattleToWinjAI();
 }

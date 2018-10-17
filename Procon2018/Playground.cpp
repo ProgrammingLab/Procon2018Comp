@@ -8,11 +8,41 @@ namespace Procon2018 {
 Playground::Playground(const s3d::RectF & viewport)
 : FieldView(viewport, Field::RandomState())
 , m_actions()
-, m_dragState() {
+, m_dragState()
+, m_ai() {
+}
+
+Playground::Playground(const s3d::RectF & viewport, SP<AI> ai0, SP<AI> ai1)
+: FieldView(viewport, Field::RandomState())
+, m_actions()
+, m_dragState()
+, m_ai{ai0, ai1} {
+	if (ai0) {
+		ai0->init(m_fld, PlayerId::A);
+		ai0->forward({});
+	}
+	if (ai1) {
+		ai1->init(m_fld, PlayerId::B);
+		ai1->forward({});
+	}
 }
 
 void Playground::update() {
 	FieldView::update();
+	if (m_fld.isEnd()) return;
+
+	bool forwards = s3d::KeyEnter.down();
+	bool validInput[4] = {};
+	for (int i = 0; i < 2; i++) {
+		if (m_ai[i] == nullptr) {
+			validInput[2*i] = validInput[2*i + 1] = true;
+			continue;
+		}
+		auto move = m_ai[i]->getNextMove();
+		if (!move) continue;
+		m_actions[2*i] = move->a0;
+		m_actions[2*i + 1] = move->a1;
+	}
 
 	auto toGridPos = [&](s3d::Vec2 vec) {
 		s3d::Vec2 pos = vec - m_v.tl();
@@ -31,6 +61,7 @@ void Playground::update() {
 	if (s3d::MouseL.down() || s3d::MouseR.down()) {
 		Point p = toGridPos(mousePos);
 		for (int i = 0; i < 4; i++) {
+			if (!validInput[i]) continue;
 			if (p == m_fld.agentPos((AgentId)i)) {
 				DragState s;
 				if (s3d::MouseL.down()) s.type = ActionType::Move;
@@ -79,14 +110,23 @@ void Playground::update() {
 		drawAction(s3d::Line(gridCenter(p), gridCenter(trg)), m_actions[i]->type);
 	}
 
-	if (s3d::KeyEnter.down()) {
+	if (forwards && m_fld.resTurn() > 0) {
 		forward(m_actions[0], m_actions[1], m_actions[2], m_actions[3]);
+		std::cout << "resTurn: " << m_fld.resTurn() << std::endl;
+		auto score = m_fld.calcScore();
+		std::cout << "score: (blue: " << score.first << ", red: " << score.second << ")" << std::endl;
+		
+		if (m_fld.resTurn() > 0) {
+			PlayerMove m0 = PlayerMove(m_actions[0], m_actions[1]);
+			PlayerMove m1 = PlayerMove(m_actions[2], m_actions[3]);
+			std::optional<std::pair<PlayerMove, PlayerMove>> moves = std::make_pair(m0, m1);
+			for (int i = 0; i < 2; i++) {
+				if (m_ai[i]) m_ai[i]->forward(moves);
+			}
+		}
 		for (int i = 0; i < 4; i++) {
 			m_actions[i].reset();
 		}
-		std::cout << "resTurn: " << m_fld.resTurn() << std::endl;
-		auto score = m_fld.calcScore();
-		std::cout << "score: (" << score.first << ", " << score.second << ")" << std::endl;
 	}
 }
 

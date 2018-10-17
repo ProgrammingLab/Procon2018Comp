@@ -44,7 +44,7 @@ void FieldView::update() {
 	auto drawAgent = [&](int i) {
 		Point currentPos = m_fld.agentPos((AgentId)i);
 		Point oldPos = m_oldPlayerPos[i];
-		PlayerId team = m_fld.teamOf((AgentId)i);
+		PlayerId team = m_fld.playerOf((AgentId)i);
 		s3d::Color color = team == PlayerId::B ? s3d::Palette::Red : s3d::Palette::Blue;
 		s3d::Vec2 end = gridCenter(currentPos);
 		s3d::Vec2 start = gridCenter(oldPos);

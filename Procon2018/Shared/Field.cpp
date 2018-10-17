@@ -197,11 +197,19 @@ const Grid& Field::grid(const Point &pos) const {
 	return m_field[pos.y][pos.x];
 }
 
+void Field::setColor(const Point & pos, const std::optional<PlayerId> &color) {
+	m_field[pos.y][pos.x].color = color;
+}
+
+void Field::setPos(AgentId agentId, const Point & pos) {
+	m_agent[(int)agentId] = pos;
+}
+
 const Point& Field::agentPos(AgentId playerId) const {
 	return m_agent[(int)playerId];
 }
 
-PlayerId Field::teamOf(AgentId playerId) const {
+PlayerId Field::playerOf(AgentId playerId) const {
 	return (int)playerId < 2 ? PlayerId::A : PlayerId::B;
 }
 
@@ -262,7 +270,7 @@ bool Field::checkValid(AgentId agentId, const Action & a) const {
 		Point next = m_agent[(int)agentId] + Neighbour8(a.dir);
 		if (outOfField(next)) return false;
 		if (auto &c = m_field[next.y][next.x].color)
-			if (c.value() != teamOf(agentId)) return false;
+			if (c.value() != playerOf(agentId)) return false;
 		return true;
 	}
 	if (a.type == ActionType::Remove) {
@@ -340,7 +348,7 @@ bool Field::forward(const OptAction& a0,
 	// 塗り絵処理
 	for (int i = 0; i < 4; i++) {
 		m_agent[i] = pos[i];
-		m_field[pos[i].y][pos[i].x].color = teamOf((AgentId)i);
+		m_field[pos[i].y][pos[i].x].color = playerOf((AgentId)i);
 	}
 
 	m_resTurn--;
@@ -363,7 +371,7 @@ bool Field::isBad(AgentId agentId, const Action & a) const {
 	Point next = m_agent[(int)agentId] + Neighbour8(a.dir);
 	if (outOfField(next)) return true;
 	if (auto &c = m_field[next.y][next.x].color) {
-		if (c.value() == teamOf(agentId)) return true;
+		if (c.value() == playerOf(agentId)) return true;
 	}
 	else if (m_field[next.y][next.x].score < 0) return true;
 	return false;

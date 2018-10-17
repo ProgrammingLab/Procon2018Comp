@@ -198,6 +198,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FieldView.cpp" />
+    <ClCompile Include="GameLog.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Playground.cpp" />
     <ClCompile Include="Shared\DnnClient.cpp" />
@@ -267,7 +268,9 @@
     <Text Include="App\example\test.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AI.h" />
     <ClInclude Include="FieldView.h" />
+    <ClInclude Include="GameLog.h" />
     <ClInclude Include="Playground.h" />
     <ClInclude Include="Shared\DnnClient.h" />
     <ClInclude Include="Shared\Field.h" />
@@ -277,6 +280,7 @@
     <ClInclude Include="Shared\Util.h" />
     <ClInclude Include="TrainDataVisualizer.h" />
     <ClInclude Include="Visualizer.h" />
+    <ClInclude Include="WinjAI\WinjAI.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
