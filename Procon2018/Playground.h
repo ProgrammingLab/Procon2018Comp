@@ -2,7 +2,7 @@
 #include "Shared/Util.h"
 #include "FieldView.h"
 #include "AI.h"
-
+#include "QRReader.h"
 
 namespace Procon2018 {
 

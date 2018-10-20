@@ -4,7 +4,7 @@
 #include "Shared/Mcts.h"
 #include "Playground.h"
 #include "WinjAI/WinjAI.h"
-
+#include "QRReader.h"
 
 namespace Procon2018 {
 

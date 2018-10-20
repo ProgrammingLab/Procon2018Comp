@@ -17,7 +17,7 @@ protected:
 	s3d::RectF m_v;
 
 	Field m_fld;
-
+	
 	double m_gridSize;
 
 	s3d::Font m_gridScoreFont;
