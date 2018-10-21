@@ -39,10 +39,13 @@ void Playground::update() {
 			continue;
 		}
 		auto move = m_ai[i]->getNextMove();
-		if (!move) continue;
+		if (!move) {
+			forwards = false;
+		}
 		m_actions[2*i] = move->a0;
 		m_actions[2*i + 1] = move->a1;
 	}
+	if (m_ai[0] && m_ai[1] && m_ai[0]->getNextMove() && m_ai[1]->getNextMove()) forwards = true;
 
 	auto toGridPos = [&](s3d::Vec2 vec) {
 		s3d::Vec2 pos = vec - m_v.tl();
