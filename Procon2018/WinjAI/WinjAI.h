@@ -1014,8 +1014,8 @@ public:
 		auto myAreaCap = areaCap(pId);
 		auto oppAreaCap = areaCap(pId_);
 		Field origin(m_field);
-		std::array<int, 2> areaScore = origin.calcAreaScore();
-		std::array<int, 2> normalScore = origin.calcNormalScore();
+		std::array<int, 2> originAreaScore = origin.calcAreaScore();
+		std::array<int, 2> originNormalScore = origin.calcNormalScore();
 		double oppVirtualAreaScore = calcVirtualAreaScore(pId_, origin, oppAreaCap);
 		auto setOrigin = [&](const Field &newOrigin, const SearchData &paint) {
 			origin = newOrigin;
@@ -1025,8 +1025,8 @@ public:
 					else if (paint.gst[y][x] == GridState::Removed) origin.setColor(Point(x, y), {});
 				}
 			}
-			areaScore = origin.calcAreaScore();
-			normalScore = origin.calcNormalScore();
+			originAreaScore = origin.calcAreaScore();
+			originNormalScore = origin.calcNormalScore();
 			calcVirtualAreaScore(pId_, origin, oppAreaCap);
 		};
 
@@ -1041,15 +1041,15 @@ public:
 			double myGain = [&] {
 				int resTurn = f.resTurn() - d.turn;
 				double r = std::max(1 - resTurn/20.0, 0.2);
-				auto s = f.calcNormalScore()[(int)pId] + r*f.calcAreaScore()[(int)pId];
-				return s - (normalScore[(int)pId] + r*areaScore[(int)pId]);
+				auto s = f.calcNormalScore()[(int)pId] + r*f.calcAreaScore(pId);
+				return s - (originNormalScore[(int)pId] + r*originAreaScore[(int)pId]);
 				/*auto s = f.calcScore();;
 				if (pId == PlayerId::A) return s.first;
 				return s.second;*/
 			}();
 			double oppGain = [&] {
-				double normalGain = f.calcNormalScore()[(int)pId_] - normalScore[(int)pId_];
-				double areaGain = f.calcAreaScore(pId_) - areaScore[(int)pId_];
+				double normalGain = f.calcNormalScore()[(int)pId_] - originNormalScore[(int)pId_];
+				double areaGain = f.calcAreaScore(pId_) - originAreaScore[(int)pId_];
 				double virtualAreaGain = calcVirtualAreaScore(pId_, f, oppAreaCap) - oppVirtualAreaScore;
 				return normalGain + (areaGain + virtualAreaGain)/2.0;
 			}();
