@@ -1082,6 +1082,7 @@ public:
 			Point p = result.path.front();
 			for (int dir = 0; dir < 8; dir++) {
 				Point np = p + Neighbour8((Direction8)dir);
+				if (m_field.outOfField(np)) continue;
 				if (result.gst[np.y][np.x] == GridState::Removed) {
 					return Action(ActionType::Remove, (Direction8)dir);
 				}
