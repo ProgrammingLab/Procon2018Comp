@@ -171,6 +171,7 @@ public:
 					int cnt = 0;
 					for (int k = 0; k < 8; k++) {
 						Point q = Point(x, y) + Neighbour8((Direction8)k);
+						if (m_field.outOfField(q)) continue;
 						if (d.used[q.y][q.x]) cnt++;
 					}
 					penalty += m_field.grid(Point(x, y)).score*(double)cnt/4.0;
@@ -178,6 +179,7 @@ public:
 			}
 			for (int dir = 0; dir < 8; dir++) {
 				Point np = d.path.back() + Neighbour8((Direction8)dir);
+				if (m_field.outOfField(np)) continue;
 				penalty += 1.0*(d.used[np.y][np.x]);
 			}
 			SP<SearchData> d_(new SearchData(d));
@@ -298,6 +300,7 @@ public:
 					int cnt = 0;
 					for (int k = 0; k < 8; k++) {
 							Point np = d.path[i] + Neighbour8((Direction8)k);
+							if (m_field.outOfField(np)) continue;
 							if (u[np.y][np.x]) cnt++;
 					}
 					if (cnt >= 3) return -1e10;
@@ -434,6 +437,7 @@ public:
 					int cnt = 0;
 					for (int k = 0; k < 8; k++) {
 						Point q = Point(x, y) + Neighbour8((Direction8)k);
+						if (m_field.outOfField(q)) continue;
 						if (d.used[q.y][q.x]) cnt++;
 					}
 					penalty += m_field.grid(Point(x, y)).score*(double)cnt/4.0;
@@ -883,6 +887,7 @@ public:
 					int cnt = 0;
 					for (int k = 0; k < 8; k++) {
 						Point np = d.path[i] + Neighbour8((Direction8)k);
+						if (m_field.outOfField(np)) continue;
 						if (u[np.y][np.x]) cnt++;
 					}
 					if (cnt >= 3) return -1e10;
