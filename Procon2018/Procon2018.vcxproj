@@ -201,7 +201,6 @@
     <ClCompile Include="GameLog.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Playground.cpp" />
-    <ClCompile Include="Shared\QueueBank.cpp" />
     <ClCompile Include="Shared\DnnClient.cpp" />
     <ClCompile Include="Shared\Field.cpp" />
     <ClCompile Include="Shared\Mcts.cpp" />
@@ -270,10 +269,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AI.h" />
+    <ClInclude Include="Shared\Bank.h" />
     <ClInclude Include="FieldView.h" />
     <ClInclude Include="GameLog.h" />
+    <ClInclude Include="Shared\MockQueue.h" />
     <ClInclude Include="Playground.h" />
-    <ClInclude Include="Shared\QueueBank.h" />
     <ClInclude Include="Shared\DnnClient.h" />
     <ClInclude Include="Shared\Field.h" />
     <ClInclude Include="Shared\Mcts.h" />

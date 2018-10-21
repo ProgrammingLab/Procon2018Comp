@@ -1,9 +1,12 @@
 ﻿#include "Field.h"
-#include "QueueBank.h"
+#include "MockQueue.h"
+#include "Bank.h"
 
 
 namespace Procon2018 {
 
+
+using IntQ = MockQueue<int, Field::MAX_H*Field::MAX_W*8>;
 
 int Field::ApproximateGause(int n, int start, int end) {
 	int sum = 0;
@@ -238,10 +241,10 @@ int Field::calcAreaScore(PlayerId pId) const {
 		return Point(i%w - 1, i/w - 1);
 	};
 
-	SP<std::queue<int>> q = QueueBank::Allocate();
+	SP<IntQ> q = Bank<IntQ>::Allocate();
 	q->push(toInt({-1, -1}));
-	while (!q->empty()) {
-		const Point f = toPoint(q->front()); q->pop();
+	while (q->size() > 0) {
+		const Point f = toPoint(q->pop());
 		if (used[f.y + O][f.x + O]) continue;
 		used[f.y + O][f.x + O] = true;
 		for (int i = 0; i < 4; i++) {
@@ -255,7 +258,7 @@ int Field::calcAreaScore(PlayerId pId) const {
 			q->push(toInt(n));
 		}
 	}
-	QueueBank::Release(q);
+	Bank<IntQ>::Release(q);
 
 	int ret = 0;
 	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
