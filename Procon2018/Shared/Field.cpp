@@ -1,4 +1,5 @@
 ﻿#include "Field.h"
+#include "QueueBank.h"
 
 
 namespace Procon2018 {
@@ -218,50 +219,65 @@ bool Field::outOfField(const Point &pos) const {
 }
 
 std::pair<int, int> Field::calcScore() const {
-	std::pair<int, int> ret(0, 0);
+	auto normal = calcNormalScore();
+	auto area = calcAreaScore();
+	return std::make_pair(normal[0] + area[0], normal[1] + area[1]);
+}
+
+int Field::calcAreaScore(PlayerId pId) const {
+	constexpr Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
+	const int O = 1;
+	bool used[Field::MAX_H + 2][Field::MAX_W + 2] = {};
+
+	auto toInt = [](const Point &p) {
+		const int w = Field::MAX_W + 2;
+		return (p.y + 1)*w + (p.x + 1);
+	};
+	auto toPoint = [](int i) {
+		const int w = Field::MAX_W + 2;
+		return Point(i%w - 1, i/w - 1);
+	};
+
+	SP<std::queue<int>> q = QueueBank::Allocate();
+	q->push(toInt({-1, -1}));
+	while (!q->empty()) {
+		const Point f = toPoint(q->front()); q->pop();
+		if (used[f.y + O][f.x + O]) continue;
+		used[f.y + O][f.x + O] = true;
+		for (int i = 0; i < 4; i++) {
+			const Point n = f + dirPoint[i];
+			if (n.x < -1 || m_w + 1 <= n.x || n.y < -1 || m_h + 1 <= n.y)
+				continue;
+			if (used[n.y + O][n.x + O]) continue;
+			if (!outOfField(n))
+				if (auto &c = m_field[n.y][n.x].color)
+					if (c.value() == pId) continue;
+			q->push(toInt(n));
+		}
+	}
+	QueueBank::Release(q);
+
+	int ret = 0;
+	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
+		if (used[y + O][x + O]) continue;
+		if (auto &c = m_field[y][x].color)
+			if (c.value() == pId) continue;
+		ret += std::abs(m_field[y][x].score);
+	}
+	return ret;
+}
+
+std::array<int, 2> Field::calcAreaScore() const {
+	return std::array<int, 2>{ calcAreaScore(PlayerId::A), calcAreaScore(PlayerId::B) };
+}
+
+std::array<int, 2> Field::calcNormalScore() const {
+	std::array<int, 2> ret{ 0, 0 };
 	for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
 		const auto &c = m_field[y][x].color;
 		if (!c) continue;
-		if (c.value() == PlayerId::A) ret.first += m_field[y][x].score;
-		else if (c.value() == PlayerId::B) ret.second += m_field[y][x].score;
-		else throw "エッ";
+		ret[(int)*c] += m_field[y][x].score;
 	}
-
-	auto specialScore = [&](PlayerId teamId) {
-		constexpr Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
-		const int O = 1;
-		bool used[Field::MAX_H + 2][Field::MAX_W + 2] = {};
-		
-		std::queue<Point> q;
-		q.push({-1, -1});
-		while (!q.empty()) {
-			const Point f = q.front(); q.pop();
-			if (used[f.y + O][f.x + O]) continue;
-			used[f.y + O][f.x + O] = true;
-			for (int i = 0; i < 4; i++) {
-				const Point n = f + dirPoint[i];
-				if (n.x < -1 || m_w + 1 <= n.x || n.y < -1 || m_h + 1 <= n.y)
-					continue;
-				if (used[n.y + O][n.x + O]) continue;
-				if (!outOfField(n))
-					if (auto &c = m_field[n.y][n.x].color)
-						if (c.value() == teamId) continue;
-				q.push(n);
-			}
-		}
-
-		int ret_ = 0;
-		for (int y = 0; y < m_h; y++) for (int x = 0; x < m_w; x++) {
-			if (used[y + O][x + O]) continue;
-			if (auto &c = m_field[y][x].color)
-				if (c.value() == teamId) continue;
-			ret_ += std::abs(m_field[y][x].score);
-		}
-		return ret_;
-	};
-	
-	ret.first += specialScore(PlayerId::A);
-	ret.second += specialScore(PlayerId::B);
 	return ret;
 }
 

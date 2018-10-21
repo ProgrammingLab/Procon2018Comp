@@ -16,6 +16,7 @@
 #include <boost/asio.hpp>
 
 #include <optional>
+#include <vector>
 #include <queue>
 #include <cmath>
 #include <memory>
