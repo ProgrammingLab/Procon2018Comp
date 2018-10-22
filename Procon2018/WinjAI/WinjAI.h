@@ -1078,9 +1078,11 @@ public:
 		int maxLength = 0;
 		int minLength = 0;
 		auto isFinal0 = [&](const SearchData &current, Point np) {
+			if (m_field.resTurn() - current.turn - 1 == 0) return true;
 			return np == p0_ && current.path.size() <= maxLength;
 		};
 		auto isFinal1 = [&](const SearchData &current, Point np) {
+			if (m_field.resTurn() - current.turn - 1 == 0) return true;
 			return np == p1_ && current.path.size() <= maxLength;
 		};
 		auto toAction = [&](const SearchData &result) {
