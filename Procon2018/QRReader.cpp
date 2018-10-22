@@ -4,7 +4,6 @@
 namespace Procon2018 {
 
 	QRReader::QRReader() {
-		read();
 	}
 
 
@@ -86,19 +85,33 @@ namespace Procon2018 {
 		organizedQrText.erase(organizedQrText.begin(), organizedQrText.end());
 
 
-		if (qrField[qrAgent[0].y][qrAgent[0].x].score == qrField[qrAgent[0].y][qrW - 1 - qrAgent[0].x].score) {
-			qrAgent[2] = Point(qrW - 1 - qrAgent[0].x, qrAgent[0].y);
-			qrAgent[3] = Point(qrW - 1 - qrAgent[1].x, qrAgent[1].y);
-		}
-
-		else if (qrField[qrAgent[0].y][qrAgent[0].x].score == qrField[qrH - 1 - qrAgent[0].y][qrAgent[0].x].score) {
-			qrAgent[2] = Point(qrAgent[0].x, qrH - 1 - qrAgent[0].y);
-			qrAgent[3] = Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y);
-		}
-
+		setEnemyAgent();
 
 	}
 
+	void QRReader::setEnemyAgent() {
+		if (isVerticalSymmetry()) {
+			if (!(Point(qrAgent[0].x, qrH - 1 - qrAgent[0].y) == Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y))) {
+				qrAgent[2] = Point(qrAgent[0].x, qrH - 1 - qrAgent[0].y);
+				qrAgent[3] = Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y);
+			}
+		}
+		else {
+			if (!(Point(qrW - 1 - qrAgent[0].x, qrAgent[0].y) == Point(qrW - 1 - qrAgent[1].x, qrAgent[1].y))) {
+				qrAgent[2] = Point(qrW - 1 - qrAgent[0].x, qrAgent[0].y);
+				qrAgent[3] = Point(qrW - 1 - qrAgent[1].x, qrAgent[1].y);
+			}
+		}
+	}
+
+	bool QRReader::isVerticalSymmetry() {
+		for (int y = 0; y < qrH / 2; ++y) {
+			for (int x = 0; x < qrW; ++x) {
+				if (qrField[y][x].score != qrField[qrH - 1 - y][x].score)return false;
+			}
+		}
+		return true;
+	}
 
 
 }
