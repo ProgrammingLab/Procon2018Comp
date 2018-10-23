@@ -5,6 +5,7 @@
 #include "Playground.h"
 #include "WinjAI/WinjAI.h"
 #include "QRReader.h"
+#include "ActionImageView.h"
 
 namespace Procon2018 {
 
@@ -102,11 +103,14 @@ void HumanPlay() {
 }
 
 void BattleToWinjAI() {
+	s3d::Graphics::SetFullScreen(true, s3d::Size(1280, 720));
 	SP<AI> winjAI((AI*)new WinjAI::WinjAI());
 	SP<AI> winjAI2((AI*)new WinjAI::WinjAI());
-	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()), winjAI, nullptr);
+	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI, nullptr);
+	ActionImageView actView;
 	while (s3d::System::Update()) {
 		grd.update();
+		actView.upd(grd);
 	}
 }
 
@@ -118,6 +122,7 @@ void Main()
 {
 	using namespace Procon2018;
 
+	const s3d::Font font(30);
 	s3d::Graphics2D::SetSamplerState(s3d::SamplerState::ClampLinear);
 	s3d::Console.open();
 	Rand::InitializeWithTime();

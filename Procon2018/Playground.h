@@ -30,6 +30,8 @@ public:
 
 	void update();
 	
+	std::array<OptAction, 4> getActions() { return m_actions; }
+
 };
 
 
