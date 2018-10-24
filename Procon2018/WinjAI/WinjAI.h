@@ -750,7 +750,7 @@ public:
 		for (int i = 0; i < firsts.size(); i++) {
 			states[0][firsts[i]->path.back().y][firsts[i]->path.back().x].push_back(firsts[i]);	
 		}
-		if (steps < 0) steps = m_field.h()*m_field.w();
+		if (steps < 0) steps = m_field.h()*m_field.w()/2;
 		for (int step = 0; step < steps; step++) {
 			if (output) std::cout << "step:" << step << std::endl;
 			for (int y = 0; y < m_field.h(); y++) {
@@ -1018,23 +1018,49 @@ public:
 
 		auto myAreaCap = areaCap(pId);
 		auto oppAreaCap = areaCap(pId_);
+		bool isMyCap[Field::MAX_H][Field::MAX_W] = {};
+		bool isOppCap[Field::MAX_H][Field::MAX_W] = {};
+		for (int i = 0; i < myAreaCap.size(); i++) {
+			for (int j = 0; j < myAreaCap[i].size(); j++) {
+				isMyCap[myAreaCap[i][j].y][myAreaCap[i][j].x] = true;
+			}
+		}
+		for (int i = 0; i < oppAreaCap.size(); i++) {
+			for (int j = 0; j < oppAreaCap[i].size(); j++) {
+				isOppCap[oppAreaCap[i][j].y][oppAreaCap[i][j].x] = true;
+			}
+		}
+		auto moderateMyAreaScore = [&](const Field &fld, const SearchData &paint) {
+			Field f_(fld);
+			for (int y = 0; y < m_field.h(); y++) {
+				for (int x = 0; x < m_field.w(); x++) {
+					if (paint.gst[y][x] == GridState::Removed) f_.setColor(Point(x, y), {});
+					else if (paint.gst[y][x] == GridState::Passed && isMyCap[y][x])
+						f_.setColor(Point(x, y), pId);
+				}
+			}
+			return f_.calcAreaScore(pId);
+		};
 		Field origin(m_field);
 		std::array<int, 2> originAreaScore = origin.calcAreaScore();
 		std::array<int, 2> originNormalScore = origin.calcNormalScore();
 		double oppVirtualAreaScore = calcVirtualAreaScore(pId_, origin, oppAreaCap);
-		auto setOrigin = [&](const Field &newOrigin, const SearchData &paint) {
-			origin = newOrigin;
+		auto setOrigin = [&](const SearchData &paint) {
+			origin = m_field;
+			originAreaScore[(int)pId] = moderateMyAreaScore(origin, paint);
 			for (int y = 0; y < m_field.h(); y++) {
 				for (int x = 0; x < m_field.w(); x++) {
 					if (paint.gst[y][x] == GridState::Passed) origin.setColor(Point(x, y), pId);
 					else if (paint.gst[y][x] == GridState::Removed) origin.setColor(Point(x, y), {});
 				}
 			}
-			originAreaScore = origin.calcAreaScore();
+			originAreaScore[(int)pId_] = origin.calcAreaScore(pId_);
 			originNormalScore = origin.calcNormalScore();
 			calcVirtualAreaScore(pId_, origin, oppAreaCap);
 		};
 
+		int maxLength = 0;
+		int minLength = 0;
 		auto evaluate = [&](const SearchData &d) {
 			Field f(origin);
 			for (int y = 0; y < m_field.h(); y++) {
@@ -1046,7 +1072,7 @@ public:
 			double myGain = [&] {
 				int resTurn = f.resTurn() - d.turn;
 				double r = std::max(1 - resTurn/20.0, 0.2);
-				auto s = f.calcNormalScore()[(int)pId] + r*f.calcAreaScore(pId);
+				auto s = f.calcNormalScore()[(int)pId] + r*moderateMyAreaScore(m_field, d);
 				return s - (originNormalScore[(int)pId] + r*originAreaScore[(int)pId]);
 				/*auto s = f.calcScore();;
 				if (pId == PlayerId::A) return s.first;
@@ -1061,6 +1087,7 @@ public:
 			return (myGain - oppGain)/(double)d.turn;
 		};
 		auto finalScore = [&](const SearchData &current, Point np) {
+			if (current.path.size() < minLength || maxLength < current.path.size()) return 1e-10;
 			return evaluate(current);
 		};
 		auto isRemovable = [&](const SearchData &current, Point np) {
@@ -1075,15 +1102,13 @@ public:
 			f_.setColor(np, {});
 			return f.calcAreaScore(pId_) < f_.calcAreaScore(pId_);
 		};
-		int maxLength = 0;
-		int minLength = 0;
 		auto isFinal0 = [&](const SearchData &current, Point np) {
 			if (m_field.resTurn() - current.turn - 1 == 0) return true;
-			return np == p0_ && current.path.size() <= maxLength;
+			return np == p0_;
 		};
 		auto isFinal1 = [&](const SearchData &current, Point np) {
 			if (m_field.resTurn() - current.turn - 1 == 0) return true;
-			return np == p1_ && current.path.size() <= maxLength;
+			return np == p1_;
 		};
 		auto toAction = [&](const SearchData &result) {
 			Point p = result.path.front();
@@ -1119,8 +1144,8 @@ public:
 		};
 		std::array<OptAction, 2> ret;
 		{
-			maxLength = (int)(distance(p0, p0_)*2.0);
-			minLength = distance(p0, p0_) + 5;
+			maxLength = std::max((int)(distance(p0, p0_)*1.5), distance(p0, p0_) + 5);
+			minLength = distance(p0, p0_) + 3;
 			SP<SearchData> first(new SearchData());
 			first->path.push_back(p0);
 			first->gst[p0.y][p0.x] = GridState::Passed;
@@ -1134,12 +1159,12 @@ public:
 				myAreaCap,
 				1,
 				false);
-			setOrigin(m_field, res);
+			setOrigin(res);
 			print(res);
 		}
 		{
-			maxLength = (int)m_field.h()*m_field.w()/4;
-			minLength = distance(p1, p1_) + 5;
+			maxLength = std::max((int)(m_field.h()*m_field.w()/4.0), distance(p1, p1_) + 5);
+			minLength = distance(p1, p1_) + 3;
 			SP<SearchData> first(new SearchData());
 			first->path.push_back(p1);
 			first->gst[p1.y][p1.x] = GridState::Passed;
@@ -1153,13 +1178,13 @@ public:
 				myAreaCap,
 				1,
 				false);
-			setOrigin(m_field, res);
+			setOrigin(res);
 			ret[1] = toAction(res);
 			print(res);
 		}
 		{
-			maxLength = (int)m_field.h()*m_field.w()/4;
-			minLength = distance(p0, p0_) + 5;
+			maxLength = std::max((int)(m_field.h()*m_field.w()/4.0), distance(p0, p0_) + 5);
+			minLength = distance(p0, p0_) + 3;
 			SP<SearchData> first(new SearchData());
 			first->path.push_back(p0);
 			first->gst[p0.y][p0.x] = GridState::Passed;
@@ -1246,6 +1271,367 @@ void Tmp() {
 }
 
 
+
+namespace FirstPhase {
+
+
+int toColor(PlayerId pId) { return 1 + (int)pId; }
+
+int toColor(const std::optional<PlayerId> &color) {
+	if (!color) return 0;
+	return toColor(*color);
+}
+
+struct SearchData {
+	std::vector<Point> path;
+	double v;
+	int turn;
+	SearchData(Point myPos) {
+		v = 0.0;
+		turn = 0;
+		path.push_back(myPos);
+	}
+};
+
+
+SearchData search(
+	const Field &fld,
+	Point myPos,
+	std::function<bool(SearchData &current, Point np)> nextM,
+	std::function<bool(const SearchData &a, const SearchData &b)> similar,
+	int steps = -1) {
+	const int beamWidth = 1;
+
+	auto comp = [&](const SP<SearchData> a, const SP<SearchData> b) {
+		return a->v > b->v;
+	};
+
+	std::optional<SearchData> ret;
+	double max = -1e10;
+
+	using Vec = std::vector<SP<SearchData>>;
+	Vec states[Field::MAX_H*Field::MAX_W][Field::MAX_H][Field::MAX_W];
+	SP<SearchData> fsd(new SearchData(myPos));
+	states[0][myPos.y][myPos.x].push_back(fsd);
+	if (steps < 0) steps = fld.h()*fld.w()/2;
+	for (int step = 0; step < steps; step++) {
+		for (int y = 0; y < fld.h(); y++) {
+			for (int x = 0; x < fld.w(); x++) {
+				int cnt = 0;
+				for (int vi = 0; cnt < beamWidth && vi < (int)states[step][y][x].size(); vi++) {
+					SP<SearchData> t = states[step][y][x][vi];
+					if ([&]() {
+						for (int vj = 0; vj < vi; vj++) {
+							if (similar(*t, *states[step][y][x][vj]))
+								return true;
+						}
+						return false;
+					}() ) continue;
+					cnt++;
+
+					for (int dir = 0; dir < 8; dir++) {
+
+						Point np = Point(x, y) + Neighbour8((Direction8)dir);
+						if (fld.outOfField(np))
+							continue;
+						//if (fld.grid(np).score < 0) continue;
+						SP<SearchData> next(new SearchData(*t));
+						if(nextM(*next, np)) {
+							if (max < next->v) {
+								max = next->v;
+								ret = *next;
+							}
+							continue;
+						}
+						states[next->turn][np.y][np.x].push_back(next);
+					}
+				}
+				states[step][y][x].clear();
+			}
+		}
+		for (int y = 0; y < fld.h(); y++) {
+			for (int x = 0; x < fld.w(); x++) {
+				auto &v = states[step + 1][y][x];
+				std::sort(v.begin(), v.end(), comp);
+			}
+		}
+	}
+	return *ret;
+};
+
+//oppPath.size() >= 1
+SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &oppPath, int turn) {
+	PlayerId pId = fld.playerOf(aId);
+	PlayerId pId_ = (PlayerId)(1 - (int)pId);
+	auto similar = [&](const SearchData &a, const SearchData &b) {
+		return false;
+	};
+	auto nextM = [&](SearchData &current, Point np) {
+		int gc[Field::MAX_H][Field::MAX_W] = {};
+		for (int y = 0; y < fld.h(); y++) {
+			for (int x = 0; x < fld.w(); x++) {
+				gc[y][x] = toColor(fld.grid(Point(x, y)).color);
+			}
+		}
+		auto getPos = [](const std::vector<Point> &path, int index) {
+			if (path.size() <= index) return path.back();
+			return path[index];
+		};
+		auto isRemove = [&gc, getPos](PlayerId pi, int index, const std::vector<Point> &path) {
+			PlayerId pi_ =  (PlayerId)(1 - (int)pi);
+			Point p = getPos(path, index);
+			Point p_ = getPos(path, index + 1);
+			if (gc[p_.y][p_.x] == toColor(pi_)) return true;
+			return false;
+		};
+		auto nextPos = [&gc, isRemove, getPos](PlayerId pi, int index, const std::vector<Point> &path) {
+			if (isRemove(pi, index, path)) return getPos(path, index);
+			return getPos(path, index + 1);
+		};
+		auto simpleAreaScore = [&]() {
+			constexpr Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
+			int v = 0;
+			for (int y = 0; y < fld.h(); y++) {
+				for (int x = 0; x < fld.w(); x++) {
+					if (gc[np.y][np.x] != 0) continue;
+					auto f = [&](PlayerId pi) {
+						for (int i = 0; i < 4; i++) {
+							Point np = Point(x, y) + dirPoint[i];
+							if (fld.outOfField(np)) return false;
+							if (gc[np.y][np.x] != toColor(pi)) return false; 
+						}
+						return true;
+					};
+					if (f(pId)) v += fld.grid(Point(x, y)).score;
+					if (f(pId_)) v -= fld.grid(Point(x, y)).score;
+				}
+			}
+			return v;
+		};
+		current.path.push_back(np);
+		current.v = 0;
+		int originAreaScore = simpleAreaScore();
+		const double r = 0.95;
+		double w = 1, wSum = 0;
+		int i = 0, j = 0;
+		bool isEnd = false;
+		for (current.turn = 0; i + 1 < current.path.size(); current.turn++) {
+			auto fw = [&](PlayerId pi, int &index, const std::vector<Point> &path) {
+				PlayerId pi_ =  (PlayerId)(1 - (int)pi);
+				Point trg = getPos(path, index + 1);
+				double k = (pId == pi) ? 1 : -1;
+				if (gc[trg.y][trg.x] != toColor(pi))
+					current.v += k*w*fld.grid(trg).score;
+				if (gc[trg.y][trg.x] == toColor(pi_)) {
+					gc[trg.y][trg.x] = 0;
+					return;
+				}
+				gc[trg.y][trg.x] = toColor(pi);
+				if (index + 1 < path.size()) index++;
+			};
+
+			bool myIsRemove = isRemove(pId, i, current.path), oppIsRemove = isRemove(pId_, j, oppPath);
+
+			//相手の行動は決め打ちなので、一方的に行動を無効化できてしまう。そこで敵有利にしておく
+			//(無効化をコメントアウト & 相手の行動は後打ち)
+			//↓
+
+			//pId側が有利すぎるコード
+			/*
+			//指定先が被って全て無効
+			if (myIsRemove == oppIsRemove && getPos(current.path, i + 1) == getPos(oppPath, j + 1)) {
+				isEnd = true;
+				break;
+			}
+			if (myIsRemove) fw(pId, i, current.path);
+			if (oppIsRemove) fw(pId_, j, oppPath);
+			//位置が被ったので移動行為は無効
+			if (nextPos(pId, i, current.path) == nextPos(pId_, j, oppPath)) {
+				isEnd = true;
+				current.turn++;
+				break;
+			}
+			if (!myIsRemove) fw(pId, i, current.path);
+			if (!oppIsRemove) fw(pId_, j, oppPath);
+			*/
+
+			//以下の実装: pId_側に忖度
+			if (j + 1 >= oppPath.size() && current.path[i + 1] == oppPath[j]) {
+				isEnd = true;
+				break;
+			}
+			if (myIsRemove == oppIsRemove && getPos(current.path, i + 1) == getPos(oppPath, j + 1)) {
+				if (i == 0) //初動だけ衝突有利
+					current.v += w*fld.grid(getPos(current.path, i + 1)).score;
+			}
+			fw(pId, i, current.path);
+			fw(pId_, j, oppPath);
+			wSum += w;
+			w *= r;
+		}
+		current.v += (simpleAreaScore() - originAreaScore)*0.5;
+		current.v /= wSum;
+		//return isEnd && std::abs(current.turn - turn) <= 3;
+		return isEnd || turn - current.turn <= 1;
+	};
+	return search(fld, fld.agentPos(aId), nextM, similar, turn);
+}
+
+std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped, std::array<std::optional<SearchData>, 2> oppData = {}) {
+	PlayerId pId_ = (PlayerId)(1 - (int)pId);
+	AgentId a0 = (AgentId)(2*(int)pId + 0);
+	AgentId a1 = (AgentId)(2*(int)pId + 1);
+	AgentId a0_ = (AgentId)(2*(int)pId_ + 0);
+	AgentId a1_ = (AgentId)(2*(int)pId_ + 1);
+	if (swapped) {
+		std::swap(a0, a1);
+		std::swap(a0_, a1_);
+	}
+	Point p0 = fld.agentPos(a0);
+	Point p1 = fld.agentPos(a1);
+	Point p0_ = fld.agentPos(a0_);
+	Point p1_ = fld.agentPos(a1_);
+	if (!oppData[0]) oppData[0] = SearchData(p0_);
+	if (!oppData[1]) oppData[1] = SearchData(p1_);
+	auto &oppData0 = oppData[(int)a0_ - 2*(int)pId_];
+	auto &oppData1 = oppData[(int)a1_ - 2*(int)pId_];
+
+	Field origin(fld);
+	auto setOrigin = [&](const SearchData &paint) {
+		origin = fld;
+		for (int i = 0; i < paint.path.size(); i++) {
+			origin.setColor(paint.path[i], pId);
+		}
+	};
+
+	std::array<std::optional<SearchData>, 2> ret;
+	for (int turn = 4; turn < std::min(30, fld.resTurn()); turn += 4) {
+		ret[0] = calcPath(a0, origin, oppData0->path, turn);
+		setOrigin(*ret[0]);
+		ret[1] = calcPath(a1, origin, oppData1->path, turn);
+		setOrigin(*ret[1]);
+		/*std::cout << turn << "========================" << std::endl;
+		bool used0[Field::MAX_H][Field::MAX_W] = {};
+		bool used1[Field::MAX_H][Field::MAX_W] = {};
+		for (int i = 0; i < ret[0]->path.size(); i++)
+			used0[ret[0]->path[i].y][ret[0]->path[i].x] = true;
+		for (int i = 0; i < ret[1]->path.size(); i++)
+			used1[ret[1]->path[i].y][ret[1]->path[i].x] = true;
+		for (int y = 0; y < fld.h(); y++) {
+			for (int x = 0; x < fld.w(); x++) {
+				if (Point(x, y) == p0) std::cout << "X ";
+				else if (Point(x, y) == p1) std::cout << "X ";
+				else if (used0[y][x] && used1[y][x]) std::cout << "* ";
+				else if (used0[y][x]) std::cout << "0 ";
+				else if (used1[y][x]) std::cout << "1 ";
+				else std::cout << "  ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << ret[0]->v << " + " << ret[1]->v << " = " << (ret[0]->v + ret[1]->v)/2.0 << std::endl;*/
+	}
+	if (swapped) return {*ret[1], *ret[0]};
+	return {*ret[0], *ret[1]};
+}
+
+PlayerMove solve(PlayerId pId, const Field &fld) {
+	PlayerId pId_ = (PlayerId)(1 - (int)pId);
+	auto wrapper = [&](PlayerId pId, const std::array<std::optional<SearchData>, 2> &oppData = {}) {
+		auto res0 = calcPath(pId, fld, false, oppData);
+		auto res1 = calcPath(pId, fld, true, oppData);
+		double v0 = (res0[0].v + res0[1].v)/2.0;
+		double v1 = (res1[0].v + res1[1].v)/2.0;
+		if (v0 > v1) return res0;
+		return res1;
+	};
+	auto toAction = [&](const SearchData &result) {
+		Point p = result.path.front();
+		for (int dir = 0; dir < 8; dir++) {
+			Point np = p + Neighbour8((Direction8)dir);
+			if (result.path[1] == np) {
+				auto color = fld.grid(np).color;
+				if (color && *color == pId_) return Action(ActionType::Remove, (Direction8)dir);
+				return Action(ActionType::Move, (Direction8)dir);
+			}
+		}
+		throw "oh yeah ...";
+	};
+	auto res = wrapper(pId, {});
+	res = wrapper(pId_, {res[0], res[1]});
+	res = wrapper(pId, {res[0], res[1]});
+	return PlayerMove(toAction(res[0]), toAction(res[1]));
+}
+
+
+}
+
+
+
+
+class WinjAI3 : AI {
+private:
+
+	Field m_field;
+
+	PlayerId m_pId;
+
+public:
+
+	WinjAI3() {}
+
+	virtual void init(const Field & field, PlayerId playerId) override {
+		m_field = field;
+		m_pId = playerId;
+	}
+
+	virtual PlayerMove calcNextMove(std::optional<std::pair<PlayerMove, PlayerMove>> moves) override {
+		if (moves) {
+			m_field.forward(moves->first, moves->second);
+		}
+		PlayerId pId = m_pId, pId_ = (PlayerId)(1 - (int)pId);
+		/*auto toAction = [&](const SearchData &result) {
+			Point p = result.path.front();
+			for (int dir = 0; dir < 8; dir++) {
+				Point np = p + Neighbour8((Direction8)dir);
+				if (m_field.outOfField(np)) continue;
+				if (result.gst[np.y][np.x] == GridState::Removed) {
+					return Action(ActionType::Remove, (Direction8)dir);
+				}
+			}
+			for (int dir = 0; dir < 8; dir++) {
+				Point np = p + Neighbour8((Direction8)dir);
+				if (result.path[1] == np) {
+					auto color = m_field.grid(np).color;
+					if (color && *color == pId_) return Action(ActionType::Remove, (Direction8)dir);
+					return Action(ActionType::Move, (Direction8)dir);
+				}
+			}
+			throw "oh yeah ...";
+		};*/
+		return FirstPhase::solve(pId, m_field);
+		//return PlayerMove(toAction(myRes[0]), toAction(myRes[1]));
+		/*auto res = (m_field.resTurn() < 0) ? finalProc(m_pId) : calcPath(m_pId);
+		std::vector<Point> paths[2] = { res.first, res.second };
+		OptAction actions[2];
+		for (int i = 0; i < 2; i++) {
+		int dir = -1;
+		Point np;
+		for (dir = 0; dir < 8; dir++) {
+		np = paths[i].front() + Neighbour8((Direction8)dir);
+		if (np == paths[i][1]) break;
+		}
+		if (dir == -1) throw "oh...";
+		ActionType aType = ActionType::Move;
+		auto g = m_field.grid(np);
+		if (g.color && *g.color != m_pId) aType = ActionType::Remove;
+		actions[i] = Action(aType, (Direction8)dir);
+		}
+		test(m_pId);
+		return PlayerMove(actions[0], actions[1]);*/
+	}
+};
+
+
 }
 /*
 ・TODO: finalScoreでもcnt>=3の計算
@@ -1265,4 +1651,7 @@ void Tmp() {
 	→提案経路を置いてみてから領域ポイントを計算し、置く前の領域ポイントとの差分でほげ
 	・複数列挙するには？
 	→距離の比のやつを計算する時は既に挙げた経路を塗っておく（同じような経路を検出しないように）。領域ポイントを計算するときは、既に挙げた経路を塗ったものとの差分、塗ってないものとの差分を取り、小さい方を評価に使う（自力で領域が作れないならだめ。他の経路が作った領域とかぶってもだめ。みたいなお気持ち）
+
+・不利状況で背後を付けられるとほぼ負ける→不利状況で衝突しに行くこと自体が自殺行為？
+TODO: 8 -> 4
 */

@@ -102,9 +102,9 @@ void HumanPlay() {
 }
 
 void BattleToWinjAI() {
-	SP<AI> winjAI((AI*)new WinjAI::WinjAI());
+	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
 	SP<AI> winjAI2((AI*)new WinjAI::WinjAI2());
-	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()), winjAI2, nullptr);
+	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()), nullptr, winjAI3);
 	while (s3d::System::Update()) {
 		grd.update();
 	}
