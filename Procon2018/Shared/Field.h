@@ -122,6 +122,12 @@ public:
 
 	std::pair<int, int> calcScore() const;
 
+	int calcAreaScore(PlayerId pId) const;
+
+	std::array<int, 2> calcAreaScore() const;
+
+	std::array<int, 2> calcNormalScore() const;
+
 	bool checkValid(AgentId agentId, const Action &a) const;
 
 	// 命令を実行し, ターンを進める

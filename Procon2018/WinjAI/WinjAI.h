@@ -35,13 +35,18 @@ public:
 
 	WinjAI() {}
 
+	int distance(Point a, Point b) {
+		return std::max(std::abs(a.x - b.x), std::abs(a.y - b.y));
+	};
+
 	std::vector<Point> search(
 		const std::vector<SP<SearchData>> &firsts,
 		std::function<double(const SearchData&)> evaluate, //同じ深さの盤面同士を比較できればいい
 		std::function<double(const SearchData& current, Point np)> finalScore,
 		std::function<bool(const SearchData& current, Point np)> isFinal,
 		int beamWidth,
-		bool output = false) {
+		bool output = false,
+		int steps = -1) {
 		auto similar = [&](const SearchData &a, const SearchData &b) {
 			int cnt = 0;
 			for (int i = 0; i < m_field.h(); i++) {
@@ -80,7 +85,7 @@ public:
 		for (int i = 0; i < firsts.size(); i++) {
 			states[firsts[i]->path.back().y][firsts[i]->path.back().x][0].push_back(firsts[i]);	
 		}
-		int steps = m_field.h()*m_field.w()/2;
+		if (steps < 0) steps = m_field.h()*m_field.w()/2;
 		for (int step = 0; step < steps; step++) {
 			if (output) std::cout << "step:" << step << std::endl;
 			for (int y = 0; y < m_field.h(); y++) {
@@ -113,6 +118,7 @@ public:
 							next->v = evaluate(*next);
 							next->path.push_back(np);
 							next->used[np.y][np.x] = true;
+							if (t->used[np.y][np.x]) next->v -= 1000;
 							/*if ((dir&1) == 0) {
 							Point cross0 = Point(x, y) + Neighbour8((Direction8)((dir + 1) % 8));
 							Point cross1 = Point(x, y) + Neighbour8((Direction8)((dir + 7) % 8));
@@ -215,10 +221,135 @@ public:
 		return search({first}, evaluate, finalScore, isFinal, 10, true);
 	}
 
-	std::pair<std::vector<Point>, std::vector<Point>> calcPath(PlayerId pId) {
-		auto distance = [](Point a, Point b) {
-			return std::max(std::abs(a.x - b.x), std::abs(a.y - b.y));
+	void test(PlayerId pId) {
+		const int H = Field::MAX_H;
+		const int W = Field::MAX_W;
+		const int h = m_field.h();
+		const int w = m_field.w();
+		const int INT_INF = 1e5;
+		auto warshallFloyd = [&](int d[H][W][H][W], const Field &fld) {
+			for (int y = 0; y < H; y++) {
+				for (int x = 0; x < W; x++) {
+					for (int y_ = 0; y_ < H; y_++) {
+						for (int x_ = 0; x_ < W; x_++) {
+							d[y][x][y_][x_] = INT_INF;
+						}
+					}
+				}
+			}
+			for (int y = 0; y < H; y++) {
+				for (int x = 0; x < W; x++) {
+					auto color = fld.grid(Point(x, y)).color;
+					if (!(color && *color == pId)) continue;
+					d[y][x][y][x] = 0;
+					for (int dir = 0; dir < 8; dir++) {
+						Point np = Point(x, y) + Neighbour8((Direction8)dir);
+						if (fld.outOfField(np)) continue;
+						auto c = fld.grid(np).color;
+						if (c && *c == pId) d[y][x][np.y][np.x] = 1;
+					}
+				}
+			}
+			for (int i = 0; i < h; i++) {
+				for (int j = 0; j < w; j++) {
+					for (int y = 0; y < h; y++) {
+						for (int x = 0; x < w; x++) {
+							for (int y_ = 0; y_ < h; y_++) {
+								for (int x_ = 0; x_ < w; x_++) {
+									int c = d[y][x][i][j] + d[i][j][y_][x_];
+									d[y][x][y_][x_] = std::min(d[y][x][y_][x_], c);
+								}
+							}
+						}
+					}
+				}
+			}
 		};
+		int d[H][W][H][W];
+		warshallFloyd(d, m_field);
+		double max = -1e10;
+		Point s, e;
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				Point p(x, y);
+				for (int y_ = 0; y_ < h; y_++) {
+					for (int x_ = 0; x_ < w; x_++) {
+						Point p_(x_, y_);
+						int dist = distance(p, p_);
+						if (dist <= 1 || d[y][x][y_][x_] >= INT_INF) continue;
+						double v = d[y][x][y_][x_]/(double)dist;
+						if (max < v) {
+							max = v;
+							s = p;
+							e = p_;
+						}
+					}
+				}
+			}
+		}
+		if (max < 0) return;
+		std::vector<Point> path = [&](){
+			auto evaluate = [&](const SearchData &d) {
+				bool u[Field::MAX_H][Field::MAX_W] = {};
+				for (int i = 0; i < d.path.size(); i++) {
+					u[d.path[i].y][d.path[i].x] = true;
+				}
+				for (int i = 0; i < d.path.size(); i++) {
+					int cnt = 0;
+					for (int k = 0; k < 8; k++) {
+							Point np = d.path[i] + Neighbour8((Direction8)k);
+							if (u[np.y][np.x]) cnt++;
+					}
+					if (cnt >= 3) return -1e10;
+				}
+				double v = 0;
+				for (int i = 1; i < d.path.size(); i++) {
+					v += m_field.grid(d.path[i]).score;
+				}
+				v /= d.path.size();
+				return v;
+			};
+			auto finalScore = [&](const SearchData &current, Point np) {
+				if (evaluate(current) < 1e-9) return 1e-10;
+				Field f_(m_field);
+				for (int i = 1; i < current.path.size(); i++) {
+					f_.setColor(current.path[i], pId);
+				}
+				auto res = f_.calcScore();
+				double v;
+				if (pId == PlayerId::A) v = res.first;
+				else v = res.second;
+				return v;
+			};
+			auto isFinal = [&](const SearchData &current, Point np) {
+				return e == np;
+			};
+			SP<SearchData> first(new SearchData());
+			first->path.push_back(s);
+			first->used[s.y][s.x] = true;
+			for (int y = 0; y < h; y++) {
+				for (int x = 0; x < w; x++) {
+					auto c = m_field.grid(Point(x, y)).color;
+					if (c && *c == pId) first->used[y][x] = true;
+				}
+			}
+			return search({first}, evaluate, finalScore, isFinal, 1, false, distance(s, e)*2);
+		}();
+		if (path.size() < 2) return;
+		bool po[H][W] = {};
+		for (int i = 1; i < path.size(); i++) po[path[i].y][path[i].x] = true;
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				auto c = m_field.grid(Point(j, i)).color;
+				if (c && *c == pId) std::cout << "X ";
+				else if (po[i][j]) std::cout << "* ";
+				else std::cout << "  ";
+			}
+			std::cout << std::endl;
+		}
+	}
+
+	std::pair<std::vector<Point>, std::vector<Point>> calcPath(PlayerId pId) {
 
 		PlayerId pId_ = (PlayerId)(1 - (int)pId);
 		AgentId a0 = (AgentId)(2*(int)pId + 0);
@@ -511,9 +642,566 @@ public:
 			if (g.color && *g.color != m_pId) aType = ActionType::Remove;
 			actions[i] = Action(aType, (Direction8)dir);
 		}
+		test(m_pId);
 		return PlayerMove(actions[0], actions[1]);
 	}
 };
+
+
+
+class WinjAI2 : AI {
+private:
+
+	Field m_field;
+
+	PlayerId m_pId;
+
+	enum class GridState {
+		Original = 0,
+		Removed = 1,
+		Passed = 2,
+	};
+	
+	struct SearchData {
+		GridState gst[Field::MAX_H][Field::MAX_W];
+		std::vector<Point> path;
+		double v;
+		int turn;
+		SearchData() {
+			for (int i = 0; i < Field::MAX_H; i++) {
+				for (int j = 0; j < Field::MAX_W; j++) {
+					gst[i][j] = GridState::Original;
+				}
+			}
+			v = 0.0;
+			turn = 0;
+		}
+	};
+
+public:
+
+	WinjAI2() {}
+
+	int distance(Point a, Point b) {
+		return std::max(std::abs(a.x - b.x), std::abs(a.y - b.y));
+	};
+
+	SearchData search(
+		PlayerId pId,
+		const std::vector<SP<SearchData>> &firsts,
+		std::function<double(const SearchData&)> evaluate, //同じ深さの盤面同士を比較できればいい
+		std::function<double(const SearchData& current, Point np)> finalScore,
+		std::function<bool(const SearchData& current, Point np)> isFinal,
+		std::function<bool(const SearchData& current, Point np)> isRemovable,
+		std::vector<std::vector<Point>> recommended,
+		int beamWidth,
+		bool output = false,
+		int steps = -1) {
+		PlayerId pId_ = (PlayerId)(1 - (int)pId);
+
+		auto similar = [&](const SearchData &a, const SearchData &b) {
+			int cnt = 0;
+			for (int i = 0; i < m_field.h(); i++) {
+				for (int j = 0; j < m_field.w(); j++) {
+					cnt += ((a.gst[i][j] == GridState::Passed) != (b.gst[i][j] == GridState::Passed));
+				}
+			}
+			//return cnt < std::min(5, (int)std::min(a.path.size(), b.path.size())/3);
+			return cnt == 0;
+		};
+		auto comp = [&](const SP<SearchData> a, const SP<SearchData> b) {
+			return a->v > b->v;
+		};
+		auto toNext = [&](SearchData &current, Point np) {
+			auto color = m_field.grid(np).color;
+			int cost = 1;
+			if (color && *color == pId_ && current.gst[np.y][np.x] == GridState::Original)
+				cost++;
+			current.path.push_back(np);
+			current.gst[np.y][np.x] = GridState::Passed;
+			current.turn += cost;
+		};
+
+		SearchData ret;
+		double max = -1e10;
+		auto updateBest = [&](const SearchData &previous, Point e) {
+			double v = finalScore(previous, e);
+			if (max < v) {
+				max = v;
+				ret = previous;
+				toNext(ret, e);
+			}
+		};
+
+		using Vec = std::vector<SP<SearchData>>;
+		Vec states[Field::MAX_H*Field::MAX_W][Field::MAX_H][Field::MAX_W];
+		/*for (int y = 0; y < field.h(); y++) {
+		for (int x = 0; x < field.w(); x++) {
+		SP<SearchData> first(new SearchData());
+		first->path.push_back(Point(x, y));
+		first->used[y][x] = true;
+		states[y][x][0].push_back(first);
+		}
+		}*/
+		for (int i = 0; i < firsts.size(); i++) {
+			states[0][firsts[i]->path.back().y][firsts[i]->path.back().x].push_back(firsts[i]);	
+		}
+		if (steps < 0) steps = m_field.h()*m_field.w();
+		for (int step = 0; step < steps; step++) {
+			if (output) std::cout << "step:" << step << std::endl;
+			for (int y = 0; y < m_field.h(); y++) {
+				for (int x = 0; x < m_field.w(); x++) {
+					int cnt = 0;
+					for (int vi = 0; cnt < beamWidth && vi < (int)states[step][y][x].size(); vi++) {
+						SP<SearchData> t = states[step][y][x][vi];
+						if ([&]() {
+							for (int vj = 0; vj < vi; vj++) {
+								if (similar(*t, *states[step][y][x][vj]))
+									return true;
+							}
+							return false;
+						}() ) continue;
+						cnt++;
+
+						for (int dir = 0; dir < 8; dir++) {
+
+							Point np = Point(x, y) + Neighbour8((Direction8)dir);
+							if (np.x < 0 || m_field.w() <= np.x || np.y < 0 || m_field.h() <= np.y)
+								continue;
+							//if (m_field.grid(np).score < 0) continue;
+							if(isFinal(*t, np)) {
+								updateBest(*t, np);
+								continue;
+							}
+							SP<SearchData> next(new SearchData(*t));
+							toNext(*next, np);
+							next->v = evaluate(*next);
+							//if (t->gst[np.y][np.x] == GridState::Passed) next->v -= 1000;
+							/*if ((dir&1) == 0) {
+							Point cross0 = Point(x, y) + Neighbour8((Direction8)((dir + 1) % 8));
+							Point cross1 = Point(x, y) + Neighbour8((Direction8)((dir + 7) % 8));
+							next->used[cross0.y][cross0.x] = true;
+							next->used[cross1.y][cross1.x] = true;
+							}*/
+							states[next->turn][np.y][np.x].push_back(next);
+							for (int ri = 0; ri < recommended.size(); ri++) {
+								for (int k = 0; k < 2; k++, std::reverse(recommended[ri].begin(), recommended[ri].end())) {
+									if (!(recommended[ri].front() == np)) continue;
+									SP<SearchData> next_(new SearchData(*t));
+									for (int rj = 0; rj < recommended[ri].size(); rj++) {
+										toNext(*next_, recommended[ri][rj]);
+									}
+									Point e = recommended[ri].back();
+									next_->v = evaluate(*next_);
+									states[next_->turn][e.y][e.x].push_back(next_);
+								}
+							}
+						}
+
+						for (int dir = 0; dir < 8; dir++) {
+							Point np = Point(x, y) + Neighbour8((Direction8)dir);
+							if (np.x < 0 || m_field.w() <= np.x || np.y < 0 || m_field.h() <= np.y)
+								continue;
+							//if (m_field.grid(np).score < 0) continue;
+							auto color = m_field.grid(np).color;
+							if (!color || *color != pId_ || t->gst[np.y][np.x] != GridState::Original) continue;
+							if (!isRemovable(*t, np)) continue;
+							
+							SP<SearchData> next(new SearchData(*t));
+							next->v = evaluate(*next);
+							next->gst[np.y][np.x] = GridState::Removed;
+							next->turn++;
+							states[next->turn][y][x].push_back(next);
+						}
+
+					}
+					states[step][y][x].clear();
+				}
+			}
+			for (int y = 0; y < m_field.h(); y++) {
+				for (int x = 0; x < m_field.w(); x++) {
+					auto &v = states[step + 1][y][x];
+					std::sort(v.begin(), v.end(), comp);
+				}
+			}
+		}
+		return ret;
+	}
+
+
+	std::vector<std::vector<Point>> areaCap(PlayerId pId) {
+		const int H = Field::MAX_H;
+		const int W = Field::MAX_W;
+		const int h = m_field.h();
+		const int w = m_field.w();
+		const int INT_INF = 1e5;
+		auto warshallFloyd = [&](int d[H][W][H][W], const Field &fld) {
+			for (int y = 0; y < H; y++) {
+				for (int x = 0; x < W; x++) {
+					for (int y_ = 0; y_ < H; y_++) {
+						for (int x_ = 0; x_ < W; x_++) {
+							d[y][x][y_][x_] = INT_INF;
+						}
+					}
+				}
+			}
+			for (int y = 0; y < H; y++) {
+				for (int x = 0; x < W; x++) {
+					auto color = fld.grid(Point(x, y)).color;
+					if (!(color && *color == pId)) continue;
+					d[y][x][y][x] = 0;
+					for (int dir = 0; dir < 8; dir++) {
+						Point np = Point(x, y) + Neighbour8((Direction8)dir);
+						if (fld.outOfField(np)) continue;
+						auto c = fld.grid(np).color;
+						if (c && *c == pId) d[y][x][np.y][np.x] = 1;
+					}
+				}
+			}
+			for (int i = 0; i < h; i++) {
+				for (int j = 0; j < w; j++) {
+					for (int y = 0; y < h; y++) {
+						for (int x = 0; x < w; x++) {
+							for (int y_ = 0; y_ < h; y_++) {
+								for (int x_ = 0; x_ < w; x_++) {
+									int c = d[y][x][i][j] + d[i][j][y_][x_];
+									d[y][x][y_][x_] = std::min(d[y][x][y_][x_], c);
+								}
+							}
+						}
+					}
+				}
+			}
+		};
+		auto calcPath = [&](int d[H][W][H][W], Point s, Point e){
+			auto evaluate = [&](const SearchData &d) {
+				bool u[Field::MAX_H][Field::MAX_W] = {};
+				for (int i = 0; i < d.path.size(); i++) {
+					u[d.path[i].y][d.path[i].x] = true;
+				}
+				for (int i = 0; i < d.path.size(); i++) {
+					int cnt = 0;
+					for (int k = 0; k < 8; k++) {
+						Point np = d.path[i] + Neighbour8((Direction8)k);
+						if (u[np.y][np.x]) cnt++;
+					}
+					if (cnt >= 3) return -1e10;
+				}
+				double v = 0;
+				for (int i = 1; i < d.path.size(); i++) {
+					v += m_field.grid(d.path[i]).score;
+				}
+				v /= d.path.size();
+				return v;
+			};
+			auto finalScore = [&](const SearchData &current, Point np) {
+				if (evaluate(current) < 1e-9) return 1e-10;
+				Field f_(m_field);
+				for (int i = 1; i < current.path.size(); i++) {
+					f_.setColor(current.path[i], pId);
+				}
+				auto res = f_.calcScore();
+				double v;
+				if (pId == PlayerId::A) v = res.first;
+				else v = res.second;
+				return v;
+			};
+			auto isFinal = [&](const SearchData &current, Point np) {
+				return e == np;
+			};
+			auto isRemovable = [](const SearchData &current, Point np) {
+				return false;
+			};
+			SP<SearchData> first(new SearchData());
+			first->path.push_back(s);
+			first->gst[s.y][s.x] = GridState::Passed;
+			for (int y = 0; y < h; y++) {
+				for (int x = 0; x < w; x++) {
+					auto c = m_field.grid(Point(x, y)).color;
+					if (c && *c == pId) first->gst[y][x] = GridState::Passed;
+				}
+			}
+			return search(pId, {first}, evaluate, finalScore, isFinal, isRemovable, {}, 1, false, distance(s, e)*2).path;
+		};
+
+		int d[H][W][H][W];
+		std::vector<std::vector<Point>> ret;
+		int areaScore = m_field.calcAreaScore(pId);
+
+		Field painted(m_field);
+		for (int capCount = 0; capCount < 6; capCount++) {
+			warshallFloyd(d, painted);
+			double max = -1e10;
+			Point s, e;
+			for (int y = 0; y < h; y++) {
+				for (int x = 0; x < w; x++) {
+					Point p(x, y);
+					for (int y_ = 0; y_ < h; y_++) {
+						for (int x_ = 0; x_ < w; x_++) {
+							Point p_(x_, y_);
+							int dist = distance(p, p_);
+							if (dist <= 1 || d[y][x][y_][x_] >= INT_INF) continue;
+							double v = d[y][x][y_][x_]/(double)dist;
+							if (max < v) {
+								max = v;
+								s = p;
+								e = p_;
+							}
+						}
+					}
+				}
+			}
+			std::vector<Point> path = calcPath(d, s, e);
+			if (max < 0) continue;
+			if (path.size() < 3) continue;
+			path.erase(path.begin()); path.pop_back();
+
+			Field f_(m_field);
+			for (int i = 0; i < path.size(); i++) {
+				f_.setColor(path[i], pId);
+			}
+			//領域ポイントが増えなくなったら終わり
+			if (areaScore >= f_.calcAreaScore(pId)) break;
+
+			for (int i = 0; i < path.size(); i++) {
+				painted.setColor(path[i], pId);
+			}
+			ret.push_back(path);
+
+
+			bool tsuyosshi[H][W] = {};
+			for (int i = 0; i < path.size(); i++) tsuyosshi[path[i].y][path[i].x] = true;
+			std::cout << "area cap " << capCount << ", player " << (int)pId << std::endl;
+			for (int i = 0; i < h; i++) {
+				for (int j = 0; j < w; j++) {
+					auto c = m_field.grid(Point(j, i)).color;
+					if (s == Point(j, i)) std::cout << "E ";
+					else if (e == Point(j, i)) std::cout << "E ";
+					else if (c && *c == pId) std::cout << "X ";
+					else if (tsuyosshi[i][j]) std::cout << "* ";
+					else std::cout << "  ";
+				}
+				std::cout << std::endl;
+			}
+			std::cout << std::endl;
+		}
+		return ret;
+	}
+
+	PlayerMove po(PlayerId pId) {
+
+		PlayerId pId_ = (PlayerId)(1 - (int)pId);
+		AgentId a0 = (AgentId)(2*(int)pId + 0);
+		AgentId a1 = (AgentId)(2*(int)pId + 1);
+		AgentId a0_ = (AgentId)(2*(int)pId_ + 0);
+		AgentId a1_ = (AgentId)(2*(int)pId_ + 1);
+		Point p0 = m_field.agentPos(a0);
+		Point p1 = m_field.agentPos(a1);
+		Point p0_ = m_field.agentPos(a0_);
+		Point p1_ = m_field.agentPos(a1_);
+		//bool kicked[Field::MAX_H][Field::MAX_W];
+
+		auto calcVirtualAreaScore = [&](PlayerId p, const Field &field, const std::vector<std::vector<Point>> &areaCap) {
+			Field field_(field);
+			for (int i = 0; i < areaCap.size(); i++) {
+				for (int j = 0; j < areaCap[i].size(); j++) {
+					field_.setColor(areaCap[i][j], p);
+				}
+			}
+			return field_.calcAreaScore(p);
+		};
+
+		auto myAreaCap = areaCap(pId);
+		auto oppAreaCap = areaCap(pId_);
+		Field origin(m_field);
+		std::array<int, 2> areaScore = origin.calcAreaScore();
+		std::array<int, 2> normalScore = origin.calcNormalScore();
+		double oppVirtualAreaScore = calcVirtualAreaScore(pId_, origin, oppAreaCap);
+		auto setOrigin = [&](const Field &newOrigin, const SearchData &paint) {
+			origin = newOrigin;
+			for (int y = 0; y < m_field.h(); y++) {
+				for (int x = 0; x < m_field.w(); x++) {
+					if (paint.gst[y][x] == GridState::Passed) origin.setColor(Point(x, y), pId);
+					else if (paint.gst[y][x] == GridState::Removed) origin.setColor(Point(x, y), {});
+				}
+			}
+			areaScore = origin.calcAreaScore();
+			normalScore = origin.calcNormalScore();
+			calcVirtualAreaScore(pId_, origin, oppAreaCap);
+		};
+
+		auto evaluate = [&](const SearchData &d) {
+			Field f(origin);
+			for (int y = 0; y < m_field.h(); y++) {
+				for (int x = 0; x < m_field.w(); x++) {
+					if (d.gst[y][x] == GridState::Removed) f.setColor(Point(x, y), {});
+					else if (d.gst[y][x] == GridState::Passed) f.setColor(Point(x, y), pId);
+				}
+			}
+			double myGain = [&] {
+				int resTurn = f.resTurn() - d.turn;
+				double r = std::max(1 - resTurn/20.0, 0.2);
+				auto s = f.calcNormalScore()[(int)pId] + r*f.calcAreaScore()[(int)pId];
+				return s - (normalScore[(int)pId] + r*areaScore[(int)pId]);
+				/*auto s = f.calcScore();;
+				if (pId == PlayerId::A) return s.first;
+				return s.second;*/
+			}();
+			double oppGain = [&] {
+				double normalGain = f.calcNormalScore()[(int)pId_] - normalScore[(int)pId_];
+				double areaGain = f.calcAreaScore(pId_) - areaScore[(int)pId_];
+				double virtualAreaGain = calcVirtualAreaScore(pId_, f, oppAreaCap) - oppVirtualAreaScore;
+				return normalGain + (areaGain + virtualAreaGain)/2.0;
+			}();
+			return (myGain - oppGain)/(double)d.turn;
+		};
+		auto finalScore = [&](const SearchData &current, Point np) {
+			return evaluate(current);
+		};
+		auto isRemovable = [&](const SearchData &current, Point np) {
+			Field f(origin);
+			for (int y = 0; y < m_field.h(); y++) {
+				for (int x = 0; x < m_field.w(); x++) {
+					if (current.gst[y][x] == GridState::Original) continue;
+					f.setColor(Point(x, y), {});
+				}
+			}
+			Field f_(f);
+			f_.setColor(np, {});
+			return f.calcAreaScore(pId_) < f_.calcAreaScore(pId_);
+		};
+		int maxLength = 0;
+		int minLength = 0;
+		auto isFinal0 = [&](const SearchData &current, Point np) {
+			return np == p0_ && current.path.size() <= maxLength;
+		};
+		auto isFinal1 = [&](const SearchData &current, Point np) {
+			return np == p1_ && current.path.size() <= maxLength;
+		};
+		auto toAction = [&](const SearchData &result) {
+			Point p = result.path.front();
+			for (int dir = 0; dir < 8; dir++) {
+				Point np = p + Neighbour8((Direction8)dir);
+				if (result.gst[np.y][np.x] == GridState::Removed) {
+					return Action(ActionType::Remove, (Direction8)dir);
+				}
+			}
+			for (int dir = 0; dir < 8; dir++) {
+				Point np = p + Neighbour8((Direction8)dir);
+				if (result.path[1] == np) {
+					auto color = m_field.grid(np).color;
+					if (color && *color == pId_) return Action(ActionType::Remove, (Direction8)dir);
+					return Action(ActionType::Move, (Direction8)dir);
+				}
+			}
+			throw "oh yeah ...";
+		};
+		auto print = [&](const SearchData &sd) {
+			for (int x = 0; x < m_field.w(); x++) std::cout << "==";
+			std::cout << std::endl;
+			for (int y = 0; y < m_field.h(); y++) {
+				for (int x = 0; x < m_field.w(); x++) {
+					if (sd.path.front() == Point(x, y)) std::cout << "X ";
+					else if (sd.gst[y][x] == GridState::Passed) std::cout << "M ";
+					else if (sd.gst[y][x] == GridState::Removed) std::cout << "* ";
+					else std::cout << "  ";
+				}
+				std::cout << std::endl;
+			}
+		};
+		std::array<OptAction, 2> ret;
+		{
+			maxLength = (int)(distance(p0, p0_)*2.0);
+			minLength = distance(p0, p0_) + 5;
+			SP<SearchData> first(new SearchData());
+			first->path.push_back(p0);
+			first->gst[p0.y][p0.x] = GridState::Passed;
+			auto res = search(
+				pId,
+				{first},
+				evaluate,
+				finalScore,
+				isFinal0,
+				isRemovable,
+				myAreaCap,
+				1,
+				false);
+			setOrigin(m_field, res);
+			print(res);
+		}
+		{
+			maxLength = (int)m_field.h()*m_field.w()/4;
+			minLength = distance(p1, p1_) + 5;
+			SP<SearchData> first(new SearchData());
+			first->path.push_back(p1);
+			first->gst[p1.y][p1.x] = GridState::Passed;
+			auto res = search(
+				pId,
+				{first},
+				evaluate,
+				finalScore,
+				isFinal1,
+				isRemovable,
+				myAreaCap,
+				1,
+				false);
+			setOrigin(m_field, res);
+			ret[1] = toAction(res);
+			print(res);
+		}
+		{
+			maxLength = (int)m_field.h()*m_field.w()/4;
+			minLength = distance(p0, p0_) + 5;
+			SP<SearchData> first(new SearchData());
+			first->path.push_back(p0);
+			first->gst[p0.y][p0.x] = GridState::Passed;
+			auto res = search(
+				pId,
+				{first},
+				evaluate,
+				finalScore,
+				isFinal0,
+				isRemovable,
+				myAreaCap,
+				1,
+				false);
+			ret[0] = toAction(res);
+			print(res);
+		}
+		return PlayerMove(ret[0], ret[1]);
+	}
+
+	virtual void init(const Field & field, PlayerId playerId) override {
+		m_field = field;
+		m_pId = playerId;
+	}
+
+	virtual PlayerMove calcNextMove(std::optional<std::pair<PlayerMove, PlayerMove>> moves) override {
+		if (moves) {
+			m_field.forward(moves->first, moves->second);
+		}
+		return po(m_pId);
+		/*auto res = (m_field.resTurn() < 0) ? finalProc(m_pId) : calcPath(m_pId);
+		std::vector<Point> paths[2] = { res.first, res.second };
+		OptAction actions[2];
+		for (int i = 0; i < 2; i++) {
+			int dir = -1;
+			Point np;
+			for (dir = 0; dir < 8; dir++) {
+				np = paths[i].front() + Neighbour8((Direction8)dir);
+				if (np == paths[i][1]) break;
+			}
+			if (dir == -1) throw "oh...";
+			ActionType aType = ActionType::Move;
+			auto g = m_field.grid(np);
+			if (g.color && *g.color != m_pId) aType = ActionType::Remove;
+			actions[i] = Action(aType, (Direction8)dir);
+		}
+		test(m_pId);
+		return PlayerMove(actions[0], actions[1]);*/
+	}
+};
+
 
 
 void Tmp() {
@@ -551,3 +1239,22 @@ void Tmp() {
 
 
 }
+/*
+・TODO: finalScoreでもcnt>=3の計算
+
+・新探索
+	・領域を作るための提案経路を引数に取る
+	・自チームの提案経路によってショートカットするような処理を仕込む
+	・評価時に相手側の提案経路を塗りつぶして領域ポイントを計算し、その領域ポイントと素の領域ポイントの平均とかでほげ（ゲーム終了盤面だったら前者の重み0。終了に近づくほどになだらかに重みを変化させたいが、恐らく後回しでよい）
+	・自分の領域ポイントは普通にそのまま計算する（ショートカットが補ってくれる）
+	・周り8マス壊してみて、領域ポイントがいい感じに減るなら壊す（一番最初に壊す可能性も当然考慮するべき）
+	・ゲーム終了を見据えた探索では、相手を追いかける必要はない（が後から探索するエージェントのことを考えづらくなるので、追いかける実装でも良いかも）
+	→終盤は、相手エージェントをゴールとするのではなく任意の座標をゴールにして最大を取れば良いのでは
+	・ゲーム終了間近で領域の中を塗って点数を稼いだ気にならないようにしないと
+
+・提案経路について
+	・今の(タイル上移動距離)/(単純な距離)を最大化する選び方でもそこそこいいが、ちゃんと領域ポイントも使って評価したい
+	→提案経路を置いてみてから領域ポイントを計算し、置く前の領域ポイントとの差分でほげ
+	・複数列挙するには？
+	→距離の比のやつを計算する時は既に挙げた経路を塗っておく（同じような経路を検出しないように）。領域ポイントを計算するときは、既に挙げた経路を塗ったものとの差分、塗ってないものとの差分を取り、小さい方を評価に使う（自力で領域が作れないならだめ。他の経路が作った領域とかぶってもだめ。みたいなお気持ち）
+*/
