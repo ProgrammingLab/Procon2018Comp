@@ -13,7 +13,7 @@ Playground::Playground(const s3d::RectF & viewport)
 }
 
 Playground::Playground(const s3d::RectF & viewport, SP<AI> ai0, SP<AI> ai1)
-: FieldView(viewport, Field::RandomState())
+: FieldView(viewport, Field::RandomState(true))
 , m_actions()
 , m_dragState()
 , m_ai{ai0, ai1} {

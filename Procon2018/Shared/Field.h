@@ -86,7 +86,7 @@ public:
 
 	static int ApproximateGause(int n, int start, int end);
 
-	static Field RandomState();
+	static Field RandomState(bool gachi = false);
 
 	static Field FromPTree(const boost::property_tree::ptree &pt);
 

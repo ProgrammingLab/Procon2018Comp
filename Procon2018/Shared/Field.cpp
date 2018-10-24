@@ -17,14 +17,19 @@ int Field::ApproximateGause(int n, int start, int end) {
 	return (int)(mean + 0.5 - (mean < 0));
 }
 
-Field Field::RandomState() {
+Field Field::RandomState(bool gachi) {
 	int dh = ApproximateGause(2, -MAX_H + 5, MAX_H - 5 + 1);
 	int dw = ApproximateGause(2, -MAX_W + 5, MAX_W - 5 + 1);
 	int h = MAX_H - abs(dh);
 	int w = MAX_W - abs(dw);
+	if (gachi) {
+		h = MAX_H;
+		w = MAX_W;
+	}
 	int n = Rand::Next(1, 4 + 1);
 	double minusP = Rand::DNext()*0.3;
 	int maxScore = Rand::Next(1, 16 + 1);
+	if (gachi) maxScore = Rand::Next(10, 16 + 1);
 
 	std::vector<std::vector<Grid>> fld;
 	fld.resize(h);
