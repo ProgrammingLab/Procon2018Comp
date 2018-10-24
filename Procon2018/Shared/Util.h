@@ -54,7 +54,7 @@ enum Direction8 {
 	LD = 4, // (-1, -1)
 	D  = 5, // (0, -1)
 	RD = 6, // (1, -1)
-	R  = 0, // (1, 0)
+	R  = 7, // (1, 0)
 };
 
 Point Neighbour8(Direction8 dir);
