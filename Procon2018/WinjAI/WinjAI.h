@@ -1313,22 +1313,22 @@ int simpleAreaScore(int gc[Field::MAX_H][Field::MAX_W], const Field &fld, Player
 	}
 	int step = 0;
 	while (true) {
-		bool updated[Field::MAX_H*Field::MAX_W] = {};
+		bool invalid[Field::MAX_H*Field::MAX_W] = {};
 		for (int y = 0; y < fld.h(); y++) {
 			for (int x = 0; x < fld.w(); x++) {
 				Point p(x, y);
-				if (group[y][x] < 0 || sum[group[y][x]] < 0) continue;
+				if (group[y][x] < 0) continue;
 				for (int dir = 0; dir < 4; dir++) {
 					Point np = p + dirPoint[dir];
 					if (np.y < 0 || fld.h() <= np.y || np.x < 0 || fld.w() <= np.x || gc[np.y][np.x] == toColor(pId_)) {
-						sum[group[y][x]] = -100000;
+						invalid[group[y][x]] = true;
 						continue;
 					}
 					if (gc[np.y][np.x] == toColor(pId)) continue;
+					if (group[y][x] != group[np.y][np.x]) invalid[group[y][x]] = true;
 					if (group[y][x] < group[np.y][np.x]) {
 						group[np.y][np.x] = group[y][x];
 						sum[group[y][x]] += std::abs(fld.grid(np).score);
-						updated[y*fld.w() + x] = true;
 					}
 				}
 			}
@@ -1337,11 +1337,16 @@ int simpleAreaScore(int gc[Field::MAX_H][Field::MAX_W], const Field &fld, Player
 			int ret = 0;
 			for (int y = 0; y < fld.h(); y++) {
 				for (int x = 0; x < fld.w(); x++) {
+					//int s = sum[y*fld.w() + x];
+					//if (s < 0) printf("(%3d, ---) ", group[y][x]);
+					//else printf("(%3d, %3d) ", group[y][x], sum[y*fld.w() + x]);
 					int num = y*fld.w() + x;
-					if (group[y][x] == num && sum[num] >= 0 && updated[num] == false)
+					if (group[y][x] == num && sum[num] >= 0 && invalid[num] == false)
 						ret += sum[num];
 				}
+				//puts("");
 			}
+			//puts("");
 			return ret;
 		}
 	}
@@ -1469,11 +1474,12 @@ SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &opp
 		double w = 1, wSum = 0;
 		int i = 0, j = 0;
 		bool isEnd = false;
-		for (current.turn = 0; i + 1 < current.path.size(); current.turn++) {
+		for (current.turn = 0; i + 1 < current.path.size() && current.turn < turn; current.turn++) {
 			auto fw = [&](PlayerId pi, int &index, const std::vector<Point> &path) {
 				PlayerId pi_ =  (PlayerId)(1 - (int)pi);
 				Point trg = getPos(path, index + 1);
 				double k = (pId == pi) ? 1 : -1;
+				if (current.turn == 0) k *= 1.5;
 				if (gc[trg.y][trg.x] != toColor(pi))
 					current.v += k*w*fld.grid(trg).score;
 				if (gc[trg.y][trg.x] == toColor(pi_)) {
@@ -1509,6 +1515,17 @@ SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &opp
 			if (!oppIsRemove) fw(pId_, j, oppPath);
 			*/
 
+			if (i <= 1) {
+				AgentId opp0 = (AgentId)(2 * (int)pId_ + 0);
+				AgentId opp1 = (AgentId)(2 * (int)pId_ + 1);
+				Point p = getPos(current.path, i + 1);
+				Point a = fld.agentPos(opp0);
+				Point b = fld.agentPos(opp1);
+				if (p == fld.agentPos(opp0) || p == fld.agentPos(opp1)) {
+					current.v = -1e5;
+					return true;
+				}
+			}
 			//以下の実装: pId_側に忖度
 			if (j + 1 >= oppPath.size() && current.path[i + 1] == oppPath[j]) {
 				isEnd = true;
@@ -1516,18 +1533,18 @@ SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &opp
 			}
 			if (myIsRemove == oppIsRemove && getPos(current.path, i + 1) == getPos(oppPath, j + 1)) {
 				if (i == 0) //初動だけ衝突有利
-					current.v += w*fld.grid(getPos(current.path, i + 1)).score;
+					current.v += w*fld.grid(getPos(current.path, i + 1)).score*1.1;
 			}
-			fw(pId, i, current.path);
+			else fw(pId, i, current.path);
 			fw(pId_, j, oppPath);
 			wSum += w;
 			w *= r;
 		}
-		current.v += (simpleAreaScore(gc, fld, pId) - originMyArea)*0.5;
-		current.v -= (simpleAreaScore(gc, fld, pId_) - originOppArea)*0.5;
+		current.v += std::max(simpleAreaScore(gc, fld, pId) - originMyArea, 16)*0.5;
+		current.v -= std::max(simpleAreaScore(gc, fld, pId_) - originOppArea, 16)*0.5;
 		current.v /= wSum;
 		//return isEnd && std::abs(current.turn - turn) <= 3;
-		return isEnd || turn - current.turn <= 1;
+		return isEnd || turn - current.turn == 0;
 	};
 	return search(fld, fld.agentPos(aId), nextM, similar, turn);
 }
@@ -1551,16 +1568,6 @@ std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped,
 	auto &oppData0 = oppData[(int)a0_ - 2*(int)pId_];
 	auto &oppData1 = oppData[(int)a1_ - 2*(int)pId_];
 
-	int gc[Field::MAX_H][Field::MAX_W] = {};
-	for (int y = 0; y < fld.h(); y++) {
-		for (int x = 0; x < fld.w(); x++) {
-			gc[y][x] = toColor(fld.grid(Point(x, y)).color);
-		}
-	}
-	int area0 = simpleAreaScore(gc, fld, PlayerId::A);
-	int area1 = simpleAreaScore(gc, fld, PlayerId::B);
-	std::cout << area0 << ", " << area1 << std::endl;
-
 	Field origin(fld);
 	auto setOrigin = [&](const SearchData &paint) {
 		origin = fld;
@@ -1570,13 +1577,14 @@ std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped,
 	};
 
 	std::array<std::optional<SearchData>, 2> ret;
-	for (int turn = 4; turn < std::min(30, fld.resTurn()); turn += 4) {
+	for (int turn = std::min(4, fld.resTurn()); turn <= std::min(15, fld.resTurn()); turn += 4) {
 		std::cout << turn << std::endl;
 		ret[0] = calcPath(a0, origin, oppData0->path, turn);
 		setOrigin(*ret[0]);
 		ret[1] = calcPath(a1, origin, oppData1->path, turn);
 		setOrigin(*ret[1]);
-		/*std::cout << turn << "========================" << std::endl;
+		if (turn != 12) continue;
+		std::cout << turn << "========================" << std::endl;
 		bool used0[Field::MAX_H][Field::MAX_W] = {};
 		bool used1[Field::MAX_H][Field::MAX_W] = {};
 		for (int i = 0; i < ret[0]->path.size(); i++)
@@ -1594,7 +1602,7 @@ std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped,
 			}
 			std::cout << std::endl;
 		}
-		std::cout << ret[0]->v << " + " << ret[1]->v << " = " << (ret[0]->v + ret[1]->v)/2.0 << std::endl;*/
+		std::cout << ret[0]->v << " + " << ret[1]->v << " = " << (ret[0]->v + ret[1]->v)/2.0 << std::endl;
 	}
 	if (swapped) return {*ret[1], *ret[0]};
 	return {*ret[0], *ret[1]};
@@ -1602,6 +1610,17 @@ std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped,
 
 PlayerMove solve(PlayerId pId, const Field &fld) {
 	PlayerId pId_ = (PlayerId)(1 - (int)pId);
+
+	int gc[Field::MAX_H][Field::MAX_W] = {};
+	for (int y = 0; y < fld.h(); y++) {
+		for (int x = 0; x < fld.w(); x++) {
+			gc[y][x] = toColor(fld.grid(Point(x, y)).color);
+		}
+	}
+	int area0 = simpleAreaScore(gc, fld, PlayerId::A);
+	int area1 = simpleAreaScore(gc, fld, PlayerId::B);
+	std::cout << area0 << ", " << area1 << std::endl;
+
 	auto wrapper = [&](PlayerId pId, const std::array<std::optional<SearchData>, 2> &oppData = {}) {
 		auto res0 = calcPath(pId, fld, false, oppData);
 		auto res1 = calcPath(pId, fld, true, oppData);
@@ -1622,8 +1641,7 @@ PlayerMove solve(PlayerId pId, const Field &fld) {
 		}
 		throw "oh yeah ...";
 	};
-	auto res = wrapper(pId, {});
-	res = wrapper(pId_, {res[0], res[1]});
+	auto res = wrapper(pId_, {});
 	res = wrapper(pId, {res[0], res[1]});
 	return PlayerMove(toAction(res[0]), toAction(res[1]));
 }
@@ -1720,4 +1738,5 @@ public:
 
 ・不利状況で背後を付けられるとほぼ負ける→不利状況で衝突しに行くこと自体が自殺行為？
 TODO: 8 -> 4
+止まってる相手（最初の探索時の相手）に突っ込んで無理やり終わらせるやつやめてほしい
 */
