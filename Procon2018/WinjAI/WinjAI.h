@@ -1293,6 +1293,59 @@ struct SearchData {
 	}
 };
 
+int simpleAreaScore(int gc[Field::MAX_H][Field::MAX_W], const Field &fld, PlayerId pId) {
+	PlayerId pId_ = (PlayerId)(1 - (int)pId);
+	constexpr Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
+	int sum[Field::MAX_H*Field::MAX_W] = {};
+	int group[Field::MAX_H][Field::MAX_W];
+	for (int y = 0; y < fld.h(); y++) {
+		for (int x = 0; x < fld.w(); x++) {
+			int num = y*fld.w() + x;
+			if (gc[y][x] == 0) {
+				sum[num] = std::abs(fld.grid(Point(x, y)).score);
+				group[y][x] = num;
+			}
+			else {
+				group[y][x] = -1;
+				sum[num] = -100000;
+			}
+		}
+	}
+	int step = 0;
+	while (true) {
+		bool updated[Field::MAX_H*Field::MAX_W] = {};
+		for (int y = 0; y < fld.h(); y++) {
+			for (int x = 0; x < fld.w(); x++) {
+				Point p(x, y);
+				if (group[y][x] < 0 || sum[group[y][x]] < 0) continue;
+				for (int dir = 0; dir < 4; dir++) {
+					Point np = p + dirPoint[dir];
+					if (np.y < 0 || fld.h() <= np.y || np.x < 0 || fld.w() <= np.x || gc[np.y][np.x] == toColor(pId_)) {
+						sum[group[y][x]] = -100000;
+						continue;
+					}
+					if (gc[np.y][np.x] == toColor(pId)) continue;
+					if (group[y][x] < group[np.y][np.x]) {
+						group[np.y][np.x] = group[y][x];
+						sum[group[y][x]] += std::abs(fld.grid(np).score);
+						updated[y*fld.w() + x] = true;
+					}
+				}
+			}
+		}
+		if (++step == 10) {
+			int ret = 0;
+			for (int y = 0; y < fld.h(); y++) {
+				for (int x = 0; x < fld.w(); x++) {
+					int num = y*fld.w() + x;
+					if (group[y][x] == num && sum[num] >= 0 && updated[num] == false)
+						ret += sum[num];
+				}
+			}
+			return ret;
+		}
+	}
+}
 
 SearchData search(
 	const Field &fld,
@@ -1388,7 +1441,7 @@ SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &opp
 			if (isRemove(pi, index, path)) return getPos(path, index);
 			return getPos(path, index + 1);
 		};
-		auto simpleAreaScore = [&]() {
+		/*auto simpleAreaScore = [&]() {
 			constexpr Point dirPoint[4] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
 			int v = 0;
 			for (int y = 0; y < fld.h(); y++) {
@@ -1407,10 +1460,11 @@ SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &opp
 				}
 			}
 			return v;
-		};
+		};*/
 		current.path.push_back(np);
 		current.v = 0;
-		int originAreaScore = simpleAreaScore();
+		int originMyArea = simpleAreaScore(gc, fld, pId);
+		int originOppArea = simpleAreaScore(gc, fld, pId_);
 		const double r = 0.95;
 		double w = 1, wSum = 0;
 		int i = 0, j = 0;
@@ -1469,7 +1523,8 @@ SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &opp
 			wSum += w;
 			w *= r;
 		}
-		current.v += (simpleAreaScore() - originAreaScore)*0.5;
+		current.v += (simpleAreaScore(gc, fld, pId) - originMyArea)*0.5;
+		current.v -= (simpleAreaScore(gc, fld, pId_) - originOppArea)*0.5;
 		current.v /= wSum;
 		//return isEnd && std::abs(current.turn - turn) <= 3;
 		return isEnd || turn - current.turn <= 1;
@@ -1496,6 +1551,16 @@ std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped,
 	auto &oppData0 = oppData[(int)a0_ - 2*(int)pId_];
 	auto &oppData1 = oppData[(int)a1_ - 2*(int)pId_];
 
+	int gc[Field::MAX_H][Field::MAX_W] = {};
+	for (int y = 0; y < fld.h(); y++) {
+		for (int x = 0; x < fld.w(); x++) {
+			gc[y][x] = toColor(fld.grid(Point(x, y)).color);
+		}
+	}
+	int area0 = simpleAreaScore(gc, fld, PlayerId::A);
+	int area1 = simpleAreaScore(gc, fld, PlayerId::B);
+	std::cout << area0 << ", " << area1 << std::endl;
+
 	Field origin(fld);
 	auto setOrigin = [&](const SearchData &paint) {
 		origin = fld;
@@ -1506,6 +1571,7 @@ std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped,
 
 	std::array<std::optional<SearchData>, 2> ret;
 	for (int turn = 4; turn < std::min(30, fld.resTurn()); turn += 4) {
+		std::cout << turn << std::endl;
 		ret[0] = calcPath(a0, origin, oppData0->path, turn);
 		setOrigin(*ret[0]);
 		ret[1] = calcPath(a1, origin, oppData1->path, turn);
