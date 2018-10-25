@@ -10,7 +10,7 @@ class QRReader {
 public:
 	QRReader();
 	~QRReader();
-	const Field createField();
+	Field createField();
 
 
 private:

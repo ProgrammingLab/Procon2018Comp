@@ -27,12 +27,12 @@ void ActionImageView::updActionImageView(Playground &playground) {
 	OptAction act1 = playground.getActions()[0];
 	OptAction act2 = playground.getActions()[1];
 
-	printf("%d %d\n", act1->dir, act2->dir);
+	//printf("%d %d\n", act1->dir, act2->dir);
 
 
 
-	actionImageOfAgent1.updActionImage(act1->dir);
-	actionImageOfAgent2.updActionImage(act2->dir);
+	actionImageOfAgent1.updActionImage(act1);
+	actionImageOfAgent2.updActionImage(act2);
 
 }
 

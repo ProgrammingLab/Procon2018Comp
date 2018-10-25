@@ -114,5 +114,25 @@ void FieldView::transit(const Field & next) {
 	m_sw.restart();
 }
 
+void FieldView::changeColor() {
+	std::optional<Point> pos;
+	Point mousePos = Point(s3d::Cursor::Pos().x, s3d::Cursor::Pos().y);
+	if (s3d::MouseL.down() || s3d::MouseR.down()) pos = mousePos;
+	if (pos) {
+		int h = m_fld.h(), w = m_fld.w();
+		for (int y = 0; y < h; ++y) {
+			for (int x = 0; x < w; ++x) {
+				std::array<Point, 2> massBorder = { Point(x*m_gridSize,y*m_gridSize) ,Point((x + 1)*m_gridSize,(y + 1)*m_gridSize) };
+				if (pos->x > massBorder[0].x&&pos->y > massBorder[0].y &&pos->x < massBorder[1].x&&pos->y < massBorder[1].y) {
+					std::cout << x << " " << y << std::endl;
+					std::optional<PlayerId> _playerId;
+					if (s3d::MouseL.down())_playerId = PlayerId(0);
+					else if (s3d::MouseR.down())_playerId = PlayerId(1);
+					m_fld.setColor(Point(x, y), _playerId);
+				}
+			}
+		}
+	}
+}
 
 }

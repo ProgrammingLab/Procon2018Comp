@@ -31,6 +31,11 @@ protected:
 
 	s3d::Vec2 gridCenter(const Point &pos) const;
 
+	void changeColor();
+
+	void changeAgentPos();
+
+
 public:
 	
 	// viewport: 描画範囲
@@ -46,6 +51,9 @@ public:
 				 const std::optional<const Action> &b1);
 
 	void transit(const Field &next);
+
+	void viewEditMode();
+
 };
 
 

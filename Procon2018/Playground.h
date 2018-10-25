@@ -22,6 +22,8 @@ private:
 
 	SP<AI> m_ai[2];
 
+	bool isEditMode = false;
+
 public:
 
 	Playground(const s3d::RectF &viewport);
@@ -30,7 +32,13 @@ public:
 
 	void update();
 	
+	void onEditMode() { isEditMode = true; }
+
+	void offEditMode() { isEditMode = false; }
+
 	std::array<OptAction, 4> getActions() { return m_actions; }
+
+
 
 };
 

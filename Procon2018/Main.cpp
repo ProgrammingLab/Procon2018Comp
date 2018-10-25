@@ -103,7 +103,7 @@ void HumanPlay() {
 }
 
 void BattleToWinjAI() {
-	s3d::Graphics::SetFullScreen(true, s3d::Size(1280, 720));
+	//s3d::Graphics::SetFullScreen(true, s3d::Size(1280, 720));
 	SP<AI> winjAI((AI*)new WinjAI::WinjAI());
 	SP<AI> winjAI2((AI*)new WinjAI::WinjAI());
 	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI, nullptr);

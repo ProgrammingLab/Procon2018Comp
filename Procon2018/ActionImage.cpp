@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "ActionImage.h"
-#include <Siv3D.hpp>
 
 
 namespace Procon2018 {
@@ -17,11 +16,12 @@ namespace Procon2018 {
 
 	void ActionImage::draw() {
 		actionImages[actionImageId].resized(width, height).draw(cx, cy);
-		//printf("%d %d\n", cx, cy);
+		dirImage[actionImageId].resized(width, height).draw(cx, cy + height);
 	}
 
-	void ActionImage::updActionImage(Direction8 dir) {
-		actionImageId = dir;
+	void ActionImage::updActionImage(OptAction act) {
+		if (!act)actionImageId = actionImages.size() - 1;
+		else actionImageId = act->dir;
 	}
 
 }
