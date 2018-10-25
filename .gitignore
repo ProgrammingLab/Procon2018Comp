@@ -1,4 +1,6 @@
 ## óêñ\Ç»ignore
+**/*.exe
+**/*.lib
 **/*.cdf
 **/*.cache
 **/*.obj
