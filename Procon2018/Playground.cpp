@@ -9,14 +9,16 @@ Playground::Playground(const s3d::RectF & viewport)
 : FieldView(viewport, Field::RandomState())
 , m_actions()
 , m_dragState()
-, m_ai() {
+, m_ai()
+, m_hiddenAI(false) {
 }
 
 Playground::Playground(const s3d::RectF & viewport, SP<AI> ai0, SP<AI> ai1)
 : FieldView(viewport, Field::RandomState(true))
 , m_actions()
 , m_dragState()
-, m_ai{ai0, ai1} {
+, m_ai{ai0, ai1}
+, m_hiddenAI(false) {
 	if (ai0) {
 		ai0->init(m_fld, PlayerId::A);
 		ai0->forward({});
@@ -108,6 +110,7 @@ void Playground::update() {
 
 	for (int i = 0; i < 4; i++) {
 		if (!m_actions[i]) continue;
+		if (m_hiddenAI && !validInput[i]) continue;
 		Point p = m_fld.agentPos((AgentId)i);
 		Point trg = p + Neighbour8(m_actions[i]->dir);
 		drawAction(s3d::Line(gridCenter(p), gridCenter(trg)), m_actions[i]->type);
@@ -131,6 +134,10 @@ void Playground::update() {
 			m_actions[i].reset();
 		}
 	}
+}
+
+void Playground::setHiddenAI(bool value) {
+	m_hiddenAI = value;
 }
 
 
