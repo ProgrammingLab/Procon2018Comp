@@ -122,7 +122,7 @@ void Main()
 	s3d::Graphics2D::SetSamplerState(s3d::SamplerState::ClampLinear);
 	s3d::Console.open();
 	std::string s;
-	std::cout << "input rand seed...(-1 for using the time) >> " << std::endl;
+	std::cout << "input rand seed...(-1 for using the time) >> ";
 	std::cin >> s;
 	if (s == "-1") {
 		Rand::InitializeWithTime();
