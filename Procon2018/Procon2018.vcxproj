@@ -98,8 +98,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SIV3D_0_2_4)\include;$(SIV3D_0_2_4)\include\ThirdParty;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SIV3D_0_2_4)\lib\Windows(x64);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SIV3D_0_3_0)\include;$(SIV3D_0_3_0)\include\ThirdParty;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SIV3D_0_3_0)\lib\Windows(x64);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Intermediate\$(ProjectName)\Release-x64\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\Release-x64\Intermediate\</IntDir>
     <TargetName>$(ProjectName)(64-bit)</TargetName>
