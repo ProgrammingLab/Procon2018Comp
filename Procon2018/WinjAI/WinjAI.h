@@ -2,6 +2,7 @@
 #include "../AI.h"
 #include "../FieldView.h"
 #include "Siv3D.hpp"
+#include "omp.h"
 
 namespace Procon2018::WinjAI {
 
@@ -1373,7 +1374,9 @@ SearchData search(
 	states[0][myPos.y][myPos.x].push_back(fsd);
 	if (steps < 0) steps = fld.h()*fld.w()/2;
 	for (int step = 0; step < steps; step++) {
+#pragma omp parallel for
 		for (int y = 0; y < fld.h(); y++) {
+#pragma omp parallel for
 			for (int x = 0; x < fld.w(); x++) {
 				int cnt = 0;
 				for (int vi = 0; cnt < beamWidth && vi < (int)states[step][y][x].size(); vi++) {
@@ -1394,14 +1397,20 @@ SearchData search(
 							continue;
 						//if (fld.grid(np).score < 0) continue;
 						SP<SearchData> next(new SearchData(*t));
-						if(nextM(*next, np)) {
-							if (max < next->v) {
-								max = next->v;
-								ret = *next;
+						if (nextM(*next, np)) {
+#pragma omp critical (UPDATE_BEST)
+							{
+								if (max < next->v) {
+									max = next->v;
+									ret = *next;
+								}
 							}
 							continue;
 						}
-						states[next->turn][np.y][np.x].push_back(next);
+#pragma omp critical (CHANGE_STATES)
+						{
+							states[next->turn][np.y][np.x].push_back(next);
+						}
 					}
 				}
 				states[step][y][x].clear();
