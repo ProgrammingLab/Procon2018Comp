@@ -72,6 +72,8 @@ public:
 
 	static void InitializeWithTime();
 
+	static void Initialize(unsigned int seed);
+
 	// [start, end)
 	static int Next(int start, int end);
 

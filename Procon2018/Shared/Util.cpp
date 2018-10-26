@@ -56,8 +56,12 @@ void Rand::InitializeWithTime() {
 	using namespace std::chrono;
 	milliseconds t = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
 	//cout << t.count() << " ms" << endl;
-	w = t.count() % UINT_MAX;
-	//cout << w << endl;
+	Initialize(t.count() % UINT_MAX);
+	std::cout << "rand seed: " << w << std::endl;
+}
+
+void Rand::Initialize(unsigned int seed) {
+	w = seed;
 	for (int i = 0; i < 20; i++) {
 		Next(1);
 	}
