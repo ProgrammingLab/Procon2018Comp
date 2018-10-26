@@ -285,6 +285,11 @@
     <ClInclude Include="Visualizer.h" />
     <ClInclude Include="WinjAI\WinjAI.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CudaLib\CudaLib.vcxproj">
+      <Project>{0d80e00e-077e-4efd-92ac-d10e39377d55}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\boost.1.68.0.0\build\boost.targets" Condition="Exists('..\packages\boost.1.68.0.0\build\boost.targets')" />
