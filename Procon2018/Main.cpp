@@ -104,9 +104,10 @@ void HumanPlay() {
 
 void BattleToWinjAI() {
 	//s3d::Graphics::SetFullScreen(true, s3d::Size(1280, 720));
-	SP<AI> winjAI((AI*)new WinjAI::WinjAI());
-	SP<AI> winjAI2((AI*)new WinjAI::WinjAI());
+	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
+	SP<AI> winjAI2((AI*)new WinjAI::WinjAI2());
 	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI, nullptr);
+	grd.setHiddenAI(true);
 	ActionImageView actView;
 	while (s3d::System::Update()) {
 		grd.update();
@@ -125,7 +126,15 @@ void Main()
 	const s3d::Font font(30);
 	s3d::Graphics2D::SetSamplerState(s3d::SamplerState::ClampLinear);
 	s3d::Console.open();
-	Rand::InitializeWithTime();
+	std::string s;
+	std::cout << "input rand seed...(-1 for using the time) >> ";
+	std::cin >> s;
+	if (s == "-1") {
+		Rand::InitializeWithTime();
+	}
+	else {
+		Rand::Initialize(std::stoul(s));
+	}
 
 	//TrainDataVisualize();
 	//BattleToDnn();

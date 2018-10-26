@@ -9,14 +9,16 @@ Playground::Playground(const s3d::RectF & viewport)
 : FieldView(viewport, Field::RandomState())
 , m_actions()
 , m_dragState()
-, m_ai() {
+, m_ai()
+, m_hiddenAI(false) {
 }
 
 Playground::Playground(const s3d::RectF & viewport, SP<AI> ai0, SP<AI> ai1)
-: FieldView(viewport, QRReader().createField())
+: FieldView(viewport, Field::RandomState(true))
 , m_actions()
 , m_dragState()
-, m_ai{ai0, ai1} {
+, m_ai{ai0, ai1}
+, m_hiddenAI(false) {
 	if (ai0) {
 		ai0->init(m_fld, PlayerId::A);
 		ai0->forward({});
@@ -113,12 +115,13 @@ void Playground::update() {
 			m_dragState.reset();
 		} ();
 
-		for (int i = 0; i < 4; i++) {
-			if (!m_actions[i]) continue;
-			Point p = m_fld.agentPos((AgentId)i);
-			Point trg = p + Neighbour8(m_actions[i]->dir);
-			drawAction(s3d::Line(gridCenter(p), gridCenter(trg)), m_actions[i]->type);
-		}
+	for (int i = 0; i < 4; i++) {
+		if (!m_actions[i]) continue;
+		if (m_hiddenAI && !validInput[i]) continue;
+		Point p = m_fld.agentPos((AgentId)i);
+		Point trg = p + Neighbour8(m_actions[i]->dir);
+		drawAction(s3d::Line(gridCenter(p), gridCenter(trg)), m_actions[i]->type);
+	}
 
 		if (forwards && m_fld.resTurn() > 0) {
 			forward(m_actions[0], m_actions[1], m_actions[2], m_actions[3]);
@@ -143,7 +146,10 @@ void Playground::update() {
 	else {
 		FieldView::changeColor();
 	}
-	
+}
+
+void Playground::setHiddenAI(bool value) {
+	m_hiddenAI = value;
 }
 
 

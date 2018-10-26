@@ -26,6 +26,8 @@ private:
 
 	bool isEditMode = false;
 
+	bool m_hiddenAI;
+
 public:
 
 	Playground(const s3d::RectF &viewport);
@@ -33,6 +35,9 @@ public:
 	Playground(const s3d::RectF &viewport, SP<AI> ai0, SP<AI> ai1);
 
 	void update();
+
+	void setHiddenAI(bool value);
+	
 	
 	void onEditMode() { isEditMode = true; }
 

@@ -277,7 +277,10 @@
     <ClInclude Include="GameLog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Shared\QueueBank.h">
+    <ClInclude Include="Shared\MockQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Bank.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ActionImageView.h">

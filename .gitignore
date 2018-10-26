@@ -1,4 +1,7 @@
 ## óêñ\Ç»ignore
+**/*.exe
+**/*.lib
+**/*_log.html
 **/*.cdf
 **/*.cache
 **/*.obj
