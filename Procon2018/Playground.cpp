@@ -14,10 +14,14 @@ Playground::Playground(const s3d::RectF & viewport)
 }
 
 Playground::Playground(const s3d::RectF & viewport, SP<AI> ai0, SP<AI> ai1)
-: FieldView(viewport, Field::RandomState(true))
+: Playground(viewport, ai0, ai1, Field::RandomState(true)) {
+}
+
+Playground::Playground(const s3d::RectF & viewport, SP<AI> ai0, SP<AI> ai1, const Field & fld)
+: FieldView(viewport, fld)
 , m_actions()
 , m_dragState()
-, m_ai{ai0, ai1}
+, m_ai{ ai0, ai1 }
 , m_hiddenAI(false) {
 	if (ai0) {
 		ai0->init(m_fld, PlayerId::A);
@@ -34,7 +38,6 @@ void Playground::update() {
 
 
 	if (s3d::KeyC.down())isEditMode = !isEditMode;
-	if (s3d::KeyT.down())m_fld.rotField();
 
 	if (!isEditMode) {
 

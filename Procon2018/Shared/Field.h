@@ -105,7 +105,7 @@ public:
 	
 	int h() const;
 
-	void rotField();
+	void rot();
 
 	bool isEnd() const;
 

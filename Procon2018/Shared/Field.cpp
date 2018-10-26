@@ -534,7 +534,7 @@ PlayerMove PlayerMove::FromInt(IntMove i){
 	return PlayerMove( Action::FromInt(i / Action::IntCount()), Action::FromInt(i % Action::IntCount()) );
 }
 
-void Field::rotField() {
+void Field::rot() {
 	Grid _grid[12][12];
 	Point _agent[4];
 	int _h = w(), _w = h();

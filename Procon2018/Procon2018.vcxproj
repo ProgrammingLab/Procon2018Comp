@@ -389,8 +389,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="Playground.cpp" />
-    <ClCompile Include="rotFieldView.cpp" />
-    <ClCompile Include="Shared\QueueBank.cpp" />
     <ClCompile Include="QRReader.cpp" />
     <ClCompile Include="Shared\DnnClient.cpp" />
     <ClCompile Include="Shared\Field.cpp" />
@@ -473,7 +471,6 @@
     <ClInclude Include="Shared\MockQueue.h" />
     <ClInclude Include="Playground.h" />
     <ClInclude Include="QRReader.h" />
-    <ClInclude Include="rotFieldView.h" />
     <ClInclude Include="Shared\QueueBank.h" />
     <ClInclude Include="Shared\DnnClient.h" />
     <ClInclude Include="Shared\Field.h" />

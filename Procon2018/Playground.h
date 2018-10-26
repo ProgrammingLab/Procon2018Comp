@@ -34,6 +34,8 @@ public:
 
 	Playground(const s3d::RectF &viewport, SP<AI> ai0, SP<AI> ai1);
 
+	Playground(const s3d::RectF &viewport, SP<AI> ai0, SP<AI> ai1, const Field &fld);
+
 	void update();
 
 	void setHiddenAI(bool value);
