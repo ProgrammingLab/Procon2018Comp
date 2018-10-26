@@ -117,10 +117,19 @@ void BattleToWinjAI() {
 
 Field rotField() {
 	Field _field = QRReader().createField();
-	while (!s3d::KeyE.down()) {
-		if (s3d::KeyT.down())_field.rot();
-		FieldView _viewField = FieldView(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), _field);
-		_viewField.update();
+	auto createFV = [&]() {
+		return FieldView(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), _field);
+	};
+	FieldView fv = createFV();
+	while (s3d::System::Update()) {
+		if (s3d::KeyT.down()) {
+			_field.rot();
+			fv = createFV();
+		}
+		if (s3d::KeyE.down()) {
+			break;
+		}
+		fv.update();
 	}
 	return _field;
 }
