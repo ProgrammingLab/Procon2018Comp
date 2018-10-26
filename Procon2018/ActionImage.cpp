@@ -15,12 +15,12 @@ namespace Procon2018 {
 	}
 
 	void ActionImage::draw() {
-		actionImages[actionImageId].resized(width, height).draw(cx, cy);
+		actionImages[(int)agentId][actionImageId].resized(width, height).draw(cx, cy);
 		dirImage[actionImageId].resized(width, height).draw(cx, cy + height);
 	}
 
 	void ActionImage::updActionImage(OptAction act) {
-		if (!act)actionImageId = actionImages.size() - 1;
+		if (!act)actionImageId = actionImages[(int)agentId].size() - 1;
 		else actionImageId = act->dir;
 	}
 

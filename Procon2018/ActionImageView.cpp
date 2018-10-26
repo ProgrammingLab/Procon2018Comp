@@ -5,6 +5,8 @@
 namespace Procon2018 {
 
 ActionImageView::ActionImageView() {
+	actionImageOfAgent1.setAgentId(AgentId(0));
+	actionImageOfAgent2.setAgentId(AgentId(1));
 	actionImageOfAgent1.cx = s3d::Window::Size().x * 2 / 3 , actionImageOfAgent1.cy = 50;
 	actionImageOfAgent2.cx = s3d::Window::Size().x * 2 / 3 + actionImageOfAgent2.width, actionImageOfAgent2.cy = 50;
 }

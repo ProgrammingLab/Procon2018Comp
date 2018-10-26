@@ -3,6 +3,8 @@
 #include "FieldView.h"
 #include "AI.h"
 #include "QRReader.h"
+#include"Panel.h"
+
 
 namespace Procon2018 {
 
@@ -37,9 +39,6 @@ public:
 	void offEditMode() { isEditMode = false; }
 
 	std::array<OptAction, 4> getActions() { return m_actions; }
-
-
-
 };
 
 

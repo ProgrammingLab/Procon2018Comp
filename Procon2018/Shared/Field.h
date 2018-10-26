@@ -105,6 +105,8 @@ public:
 	
 	int h() const;
 
+	void rotField();
+
 	bool isEnd() const;
 
 	void setResTurn(int resTurn);
