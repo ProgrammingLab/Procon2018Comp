@@ -11,8 +11,8 @@ namespace Procon2018 {
 namespace CudaLib {
 
 
-__global__ int d_CalcAreaPoint(int ***gc) {
-
+__global__ void d_CalcAreaPoint(int ***gc) {
+	
 }
 
 
