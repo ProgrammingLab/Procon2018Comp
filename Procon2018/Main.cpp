@@ -106,7 +106,7 @@ void BattleToWinjAI() {
 	//s3d::Graphics::SetFullScreen(true, s3d::Size(1280, 720));
 	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
 	SP<AI> winjAI2((AI*)new WinjAI::WinjAI2());
-	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI, nullptr);
+	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI3, nullptr);
 	grd.setHiddenAI(true);
 	ActionImageView actView;
 	while (s3d::System::Update()) {
