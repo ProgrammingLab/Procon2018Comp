@@ -1479,7 +1479,7 @@ SearchData calcPath(AgentId aId, const Field &fld, const std::vector<Point> &opp
 		current.v = 0;
 		int originMyArea = simpleAreaScore(gc, fld, pId);
 		int originOppArea = simpleAreaScore(gc, fld, pId_);
-		const double r = 0.95;
+		const double r = 0.93;
 		double w = 1, wSum = 0;
 		int i = 0, j = 0;
 		bool isEnd = false;
@@ -1972,7 +1972,7 @@ std::array<SearchData, 2> calcPath(PlayerId pId, const Field &fld, bool swapped,
 	};
 
 	std::array<std::optional<SearchData>, 2> ret;
-	for (int turn = std::min(4, fld.resTurn()); turn <= std::min(15, fld.resTurn()); turn += 4) {
+	for (int turn = std::min(2, fld.resTurn()); turn <= std::min(18, fld.resTurn()); turn += 3) {
 		std::cout << turn << std::endl;
 		ret[0] = calcPath(a0, origin, oppData0->path, turn);
 		setOrigin(*ret[0]);
