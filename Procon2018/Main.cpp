@@ -122,8 +122,8 @@ void BattleToWinjAI() {
 	}
 }
 
-Field rotField() {
-	Field _field = QRReader().createField();
+Field rotField(PlayerId myId) {
+	Field _field = QRReader(myId).createField();
 	auto createFV = [&]() {
 		return FieldView(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), _field);
 	};
@@ -145,12 +145,14 @@ Field rotField() {
 	return _field;
 }
 
-void GachiMain() {
+void GachiMain(PlayerId myId) {
 	Rand::InitializeWithTime();
-	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
-	Field field = rotField();
-	PlaygroundForPad grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI3, nullptr, field, PlayerId::A);
-	ActionImageView actView;
+	SP<AI> player0((AI*)new WinjAI::WinjAI3());
+	SP<AI> player1;
+	if (myId == PlayerId::B) std::swap(player0, player1);
+	Field field = rotField(myId);
+	PlaygroundForPad grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), player0, player1, field, myId);
+	ActionImageView actView(myId);
 	while (s3d::System::Update()) {
 		grd.update();
 		actView.upd(grd.getActions());
@@ -282,7 +284,7 @@ void Main()
 	//BattleToDnn();
 	//HumanPlay();
 	//BattleToWinjAI();
-	GachiMain();
+	GachiMain(PlayerId::A);
 	//XInputTest();
 	//PlaygroundForPadTest();
 }

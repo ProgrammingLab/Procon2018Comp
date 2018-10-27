@@ -3,7 +3,12 @@
 
 namespace Procon2018 {
 
-	QRReader::QRReader() {
+	QRReader::QRReader(PlayerId pId) : pId(pId) {
+		pId_ = (PlayerId)(1 - (int)pId);
+		a0 = (AgentId)((int)pId*2 + 0);
+		a1 = (AgentId)((int)pId*2 + 1);
+		a2 = (AgentId)((int)pId_*2 + 0);
+		a3 = (AgentId)((int)pId_*2 + 1);
 	}
 
 
@@ -85,8 +90,8 @@ namespace Procon2018 {
 			qrField.push_back(grid);
 		}
 
-		qrAgent[0] = Point(stoi(organizedQrText[1]) - 1, stoi(organizedQrText[0]) - 1);
-		qrAgent[1] = Point(stoi(organizedQrText[3]) - 1, stoi(organizedQrText[2]) - 1);
+		qrAgent[(int)a0] = Point(stoi(organizedQrText[1]) - 1, stoi(organizedQrText[0]) - 1);
+		qrAgent[(int)a1] = Point(stoi(organizedQrText[3]) - 1, stoi(organizedQrText[2]) - 1);
 		organizedQrText.erase(organizedQrText.begin(), organizedQrText.end());
 		
 		
@@ -115,13 +120,13 @@ namespace Procon2018 {
 	}
 
 	void QRReader::setEnemyAgent() {
-		if (isVerticalSymmetry() && !(qrAgent[0] == Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y))) {
-			qrAgent[2] = Point(qrAgent[0].x, qrH - 1 - qrAgent[0].y);
-			qrAgent[3] = Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y);
+		if (isVerticalSymmetry() && !(qrAgent[(int)a0] == Point(qrAgent[(int)a1].x, qrH - 1 - qrAgent[(int)a1].y))) {
+			qrAgent[(int)a2] = Point(qrAgent[(int)a0].x, qrH - 1 - qrAgent[(int)a0].y);
+			qrAgent[(int)a3] = Point(qrAgent[(int)a1].x, qrH - 1 - qrAgent[(int)a1].y);
 		}
 		else {
-			qrAgent[2] = Point(qrW - 1 - qrAgent[0].x, qrAgent[0].y);
-			qrAgent[3] = Point(qrW - 1 - qrAgent[1].x, qrAgent[1].y);
+			qrAgent[(int)a2] = Point(qrW - 1 - qrAgent[(int)a0].x, qrAgent[(int)a0].y);
+			qrAgent[(int)a3] = Point(qrW - 1 - qrAgent[(int)a1].x, qrAgent[(int)a1].y);
 		}
 	}
 

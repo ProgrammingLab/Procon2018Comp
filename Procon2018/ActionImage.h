@@ -22,13 +22,13 @@ public:
 	void updActionImage(OptAction act);
 	void draw();
 
-	void setAgentId(AgentId id) { agentId = id; }
+	void setAgentIdOnPlayer(int id) { agentIdOnPlayer = id; }
 
 private:
 
 	int actionImageId;
 	
-	AgentId agentId;
+	int agentIdOnPlayer;
 
 	ActionType aType;
 

@@ -105,6 +105,16 @@ void PlaygroundForPad::update() {
 		}
 	}
 	else {
+		auto selectedAgent = [&] {
+			for (int i = 0; i < 4; i++) {
+				AgentId aId = (AgentId)i;
+				if (m_cursor == m_fld.agentPos(aId)) {
+					m_actions[i].reset();
+					return std::optional<AgentId>(aId);
+				}
+			}
+			return std::optional<AgentId>();
+		};
 		PlayerId nPadPlayer = (PlayerId)(1 - (int)m_padPlayer);
 		AgentId a0 = (AgentId)(2*(int)m_padPlayer + 0);
 		AgentId a1 = (AgentId)(2*(int)m_padPlayer + 1);
@@ -123,16 +133,19 @@ void PlaygroundForPad::update() {
 		}
 		else m_rtFlg = false;
 		if (controller.buttonA.down()) {
-			m_controlledAgent = [&] {
-				for (int i = 0; i < 4; i++) {
-					AgentId aId = (AgentId)i;
-					if (m_cursor == m_fld.agentPos(aId)) {
-						m_actions[i].reset();
-						return std::optional<AgentId>(aId);
-					}
-				}
-				return std::optional<AgentId>();
-			}();
+			m_controlledAgent = selectedAgent();
+		}
+		else if (controller.buttonY.down() && !selectedAgent()) {
+			Field newFld = m_fld;
+			auto color = m_fld.grid(m_cursor).color;
+			if (!color) color = PlayerId::A;
+			else if (*color == PlayerId::A) color = PlayerId::B;
+			else color.reset();
+			newFld.setColor(m_cursor, color);
+			transit(newFld);
+			for (int i = 0; i < 2; i++) {
+				if (m_ai[i]) m_ai[i]->init(newFld, (PlayerId)i);
+			}
 		}
 		if (!m_fld.outOfField(m_cursor + downVec))
 			m_cursor += downVec;
@@ -140,7 +153,7 @@ void PlaygroundForPad::update() {
 	}
 
 
-	if (s3d::KeyBackspace.down() && m_old) {
+	if ((s3d::KeyBackspace.down() || controller.buttonBack.down()) && m_old) {
 		bool possible = true;
 		for (int i = 0; i < 2; i++) {
 			if (m_ai[i] && !m_ai[i]->getNextMoveWithCache()) possible = false;
