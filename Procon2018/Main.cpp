@@ -103,6 +103,16 @@ void HumanPlay() {
 }
 
 void BattleToWinjAI() {
+	std::string s;
+	std::cout << "input rand seed...(-1 for using the time) >> ";
+	std::cin >> s;
+	s = "-1";
+	if (s == "-1") {
+		Rand::InitializeWithTime();
+	}
+	else {
+		Rand::Initialize(std::stoul(s));
+	}
 	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
 	SP<AI> winjAI4((AI*)new WinjAI::WinjAI4());
 	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()), winjAI3, winjAI4);
@@ -132,6 +142,7 @@ Field rotField() {
 }
 
 void GachiMain() {
+	Rand::InitializeWithTime();
 	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
 	Field field = rotField();
 	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI3, nullptr, field);
@@ -151,19 +162,8 @@ void Main()
 {
 	using namespace Procon2018;
 
-	const s3d::Font font(30);
 	s3d::Graphics2D::SetSamplerState(s3d::SamplerState::ClampLinear);
 	s3d::Console.open();
-	std::string s;
-	//std::cout << "input rand seed...(-1 for using the time) >> ";
-	//std::cin >> s;
-	s = "-1";
-	if (s == "-1") {
-		Rand::InitializeWithTime();
-	}
-	else {
-		Rand::Initialize(std::stoul(s));
-	}
 
 	//TrainDataVisualize();
 	//BattleToDnn();
