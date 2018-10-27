@@ -534,5 +534,30 @@ PlayerMove PlayerMove::FromInt(IntMove i){
 	return PlayerMove( Action::FromInt(i / Action::IntCount()), Action::FromInt(i % Action::IntCount()) );
 }
 
+void Field::rot() {
+	Grid _grid[12][12];
+	Point _agent[4];
+	int _h = w(), _w = h();
+	for (int y = 0; y < h(); y++) {
+		for (int x = 0; x < w(); x++) {
+			_grid[w() - 1 - x][y] = m_field[y][x];
+		}
+	}
+	for (int i = 0; i < 4; ++i) {
+		_agent[i] = Point(m_agent[i].y, w() - 1 - m_agent[i].x);
+	}
+	
+	m_w = _w, m_h = _h;
+
+	for (int y = 0; y < 12; ++y) {
+		for (int x = 0; x < 12; ++x) {
+			m_field[y][x] = _grid[y][x];
+		}
+	}
+
+	for (int i = 0; i < 4; ++i)m_agent[i] = _agent[i];
+
+
+}
 
 }

@@ -4,7 +4,8 @@
 #include "Shared/Mcts.h"
 #include "Playground.h"
 #include "WinjAI/WinjAI.h"
-
+#include "QRReader.h"
+#include "ActionImageView.h"
 
 namespace Procon2018 {
 
@@ -111,6 +112,37 @@ void BattleToWinjAI() {
 	}
 }
 
+Field rotField() {
+	Field _field = QRReader().createField();
+	auto createFV = [&]() {
+		return FieldView(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), _field);
+	};
+	FieldView fv = createFV();
+	while (s3d::System::Update()) {
+		if (s3d::KeyT.down()) {
+			_field.rot();
+			fv = createFV();
+		}
+		if (s3d::KeyE.down()) {
+			break;
+		}
+		fv.update();
+	}
+	return _field;
+}
+
+void GachiMain() {
+	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
+	Field field = rotField();
+	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI3, nullptr, field);
+	grd.setHiddenAI(true);
+	ActionImageView actView;
+	while (s3d::System::Update()) {
+		grd.update();
+		actView.upd(grd);
+	}
+}
+
 
 }
 
@@ -119,6 +151,7 @@ void Main()
 {
 	using namespace Procon2018;
 
+	const s3d::Font font(30);
 	s3d::Graphics2D::SetSamplerState(s3d::SamplerState::ClampLinear);
 	s3d::Console.open();
 	std::string s;
@@ -134,5 +167,6 @@ void Main()
 	//TrainDataVisualize();
 	//BattleToDnn();
 	//HumanPlay();
-	BattleToWinjAI();
+	//BattleToWinjAI();
+	GachiMain();
 }

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Util.h"
 
+
 namespace Procon2018 {
 
 
@@ -73,7 +74,7 @@ class Field {
 public:
 
 	static const int MAX_W = 12, MAX_H = 12;
-
+	
 protected:
 
 	int m_resTurn, m_w, m_h;
@@ -103,6 +104,8 @@ public:
 	int w() const;
 	
 	int h() const;
+
+	void rot();
 
 	bool isEnd() const;
 

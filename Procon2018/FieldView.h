@@ -17,7 +17,7 @@ protected:
 	s3d::RectF m_v;
 
 	Field m_fld;
-
+	
 	double m_gridSize;
 
 	s3d::Font m_gridScoreFont;
@@ -30,6 +30,11 @@ protected:
 	s3d::Color gridColor(const Point &pos) const;
 
 	s3d::Vec2 gridCenter(const Point &pos) const;
+
+	void changeColor();
+
+	void changeAgentPos();
+
 
 public:
 	
@@ -46,6 +51,9 @@ public:
 				 const std::optional<const Action> &b1);
 
 	void transit(const Field &next);
+
+	void viewEditMode();
+
 };
 
 
