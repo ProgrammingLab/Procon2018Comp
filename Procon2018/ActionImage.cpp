@@ -67,7 +67,7 @@ namespace Procon2018 {
 		sw.restart();
 		if (t >= 0.5) t -= 0.5;
 		double w = 2*s3d::Math::Pi*t/0.5;
-		int k = (aType == ActionType::Remove ? 10 : 0);
+		int k = (aType == ActionType::Remove ? 0 : 0);
 		int cx_ = cx + k*s3d::Math::Cos(w), cy_ = cy + k*s3d::Math::Sin(w);
 		(*actionImages)[(int)agentId][actionImageId].resized(width, height).draw(cx_, cy_);
 		(*dirImage)[actionImageId].resized(width, height).draw(cx_, cy_ + height);
@@ -76,9 +76,11 @@ namespace Procon2018 {
 	void ActionImage::updActionImage(OptAction act) {
 		if (!act) {
 			actionImageId = (*actionImages)[(int)agentId].size() - 1;
+		}
+		else {
+			actionImageId = act->dir;
 			aType = act->type;
 		}
-		else actionImageId = act->dir;
 	}
 
 }

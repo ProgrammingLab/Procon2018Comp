@@ -21,13 +21,18 @@ public:
 			return calcNextMove(moves);
 		});
 	}
-	virtual std::optional<PlayerMove> getNextMove() {
+	virtual std::optional<PlayerMove> getNextMoveWithCache() {
 		if (m_cache) return m_cache;
+	}
+	virtual std::optional<PlayerMove> checkNextMove() {
 		if (m_result && m_result->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			m_cache = m_result->get();
 			m_result.reset();
 			return m_cache;
 		}
+		return {};
+	}
+	virtual std::array<std::vector<Point>, 4> pathGuide() {
 		return {};
 	}
 };

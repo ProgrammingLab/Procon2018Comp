@@ -7,13 +7,13 @@ class ActionImageView {
 public:
 	ActionImageView();
 	~ActionImageView();
-	void upd(Playground &playground);
+	void upd(const std::array<OptAction, 4> &actions);
 
 private:
 
 	ActionImage actionImageOfAgent1, actionImageOfAgent2;
 	void draw();
-	void updActionImageView(Playground &playground);
+	void updActionImageView(const std::array<OptAction, 4> &actions);
 
 };
 }

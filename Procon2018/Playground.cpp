@@ -37,7 +37,7 @@ void Playground::update() {
 	if (s3d::KeyBackspace.down() && m_old) {
 		bool possible = true;
 		for (int i = 0; i < 2; i++) {
-			if (m_ai[i] && !m_ai[i]->getNextMove()) possible = false;
+			if (m_ai[i] && !m_ai[i]->getNextMoveWithCache()) possible = false;
 		}
 		if (possible) {
 			for (int i = 0; i < 2; i++) {
@@ -68,7 +68,7 @@ void Playground::update() {
 			validInput[2*i] = validInput[2*i + 1] = true;
 			continue;
 		}
-		aiMove[i] = m_ai[i]->getNextMove();
+		aiMove[i] = m_ai[i]->getNextMoveWithCache();
 		if (!aiMove[i]) {
 			forwards = false;
 		}

@@ -6,6 +6,7 @@
 #include "WinjAI/WinjAI.h"
 #include "QRReader.h"
 #include "ActionImageView.h"
+#include "PlaygroundForPad.h"
 
 namespace Procon2018 {
 
@@ -114,8 +115,7 @@ void BattleToWinjAI() {
 		Rand::Initialize(std::stoul(s));
 	}
 	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
-	SP<AI> winjAI4((AI*)new WinjAI::WinjAI4());
-	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()), winjAI3, winjAI4);
+	Playground grd(s3d::RectF(0, 0, s3d::Window::Size()), winjAI3, nullptr);
 	grd.setHiddenAI(true);
 	while (s3d::System::Update()) {
 		grd.update();
@@ -149,11 +149,121 @@ void GachiMain() {
 	Rand::InitializeWithTime();
 	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
 	Field field = rotField();
-	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI3, nullptr, field);
+	PlaygroundForPad grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI3, nullptr, field, PlayerId::A);
 	ActionImageView actView;
 	while (s3d::System::Update()) {
 		grd.update();
-		actView.upd(grd);
+		actView.upd(grd.getActions());
+	}
+}
+
+void XInputTest() {
+	using namespace s3d;
+	Window::Resize(640, 480);
+	Graphics::SetBackground(Color(160, 200, 100));
+
+	const s3d::Ellipse buttonLB(160, 140, 50, 24);
+	const s3d::Ellipse buttonRB(520, 140, 50, 24);
+
+	const RectF leftTrigger(150, 16, 40, 100);
+	const RectF rightTrigger(500, 16, 40, 100);
+
+	const Circle buttonLThumb(170, 250, 35);
+	const Circle buttonRThumb(420, 350, 35);
+	const Circle buttonDPad(260, 350, 40);
+
+	const Circle buttonA(510, 300, 20);
+	const Circle buttonB(560, 250, 20);
+	const Circle buttonX(460, 250, 20);
+	const Circle buttonY(510, 200, 20);
+	const Circle buttonBack(270, 250, 15);
+	const Circle buttonStart(410, 250, 15);
+
+	size_t userIndex = 0;
+	bool deadZone = false;
+	double leftV = 0.0, rightV = 0.0;
+
+	while (System::Update())
+	{
+		auto controller = XInput(userIndex);
+
+		if (deadZone)
+		{
+			controller.setLeftTriggerDeadZone();
+			controller.setRightTriggerDeadZone();
+			controller.setLeftThumbDeadZone();
+			controller.setRightThumbDeadZone();
+		}
+		else
+		{
+			controller.setLeftTriggerDeadZone(DeadZone::Disabled());
+			controller.setRightTriggerDeadZone(DeadZone::Disabled());
+			controller.setLeftThumbDeadZone(DeadZone::Disabled());
+			controller.setRightThumbDeadZone(DeadZone::Disabled());
+		}
+
+		controller.setVibration(leftV, rightV);
+
+		buttonLB.draw(Color(controller.buttonLB.pressed() ? 255 : 200));
+		buttonRB.draw(Color(controller.buttonRB.pressed() ? 255 : 200));
+
+		s3d::Ellipse(340 + 3.0 * Random(leftV + rightV), 480, 300, 440).draw(Color(232));
+		s3d::Ellipse(340, 40, 220, 120).draw(Color(160, 200, 100));
+		Circle(340, 660, 240).draw(Color(160, 200, 100));
+
+		Circle(340, 250, 30).draw(Color(160));
+
+		if (controller.isConnected())
+		{
+			Circle(340, 250, 32).drawPie(-0.5*Math::Pi + 0.5*Math::Pi * controller.userIndex, 0.5*Math::Pi, Color(200, 255, 120));
+		}
+
+		Circle(340, 250, 25).draw(Color(140));
+
+		leftTrigger.draw(Alpha(64));
+		leftTrigger.stretched((controller.leftTrigger - 1.0) * leftTrigger.h, 0, 0, 0).draw();
+
+		rightTrigger.draw(Alpha(64));
+		rightTrigger.stretched((controller.rightTrigger - 1.0) * rightTrigger.h, 0, 0, 0).draw();
+
+		buttonLThumb.draw(Color(controller.buttonLThumb.pressed() ? 220 : 127));
+		Circle(buttonLThumb.center + Vec2(controller.leftThumbX, -controller.leftThumbY) * 25, 20).draw();
+
+		buttonRThumb.draw(Color(controller.buttonRThumb.pressed() ? 220 : 127));
+		Circle(buttonRThumb.center + Vec2(controller.rightThumbX, -controller.rightThumbY) * 25, 20).draw();
+
+		buttonDPad.draw(Color(127));
+
+		const Vec2 direction(
+			controller.buttonRight.pressed() - controller.buttonLeft.pressed(),
+			controller.buttonDown.pressed() - controller.buttonUp.pressed());
+
+		if (!direction.isZero())
+		{
+			Circle(buttonDPad.center + direction.normalized() * 25, 15).draw();
+		}
+
+		buttonA.draw(Color(0, 255, 64).setA(controller.buttonA.pressed() ? 255 : 64));
+		buttonB.draw(Color(255, 0, 64).setA(controller.buttonB.pressed() ? 255 : 64));
+		buttonX.draw(Color(0, 64, 255).setA(controller.buttonX.pressed() ? 255 : 64));
+		buttonY.draw(Color(255, 127, 0).setA(controller.buttonY.pressed() ? 255 : 64));
+
+		buttonBack.draw(Color(controller.buttonBack.pressed() ? 255 : 200));
+		buttonStart.draw(Color(controller.buttonStart.pressed() ? 255 : 200));
+
+		SimpleGUI::RadioButtons(userIndex, { U"1P", U"2P", U"3P", U"4P" }, Vec2(10, 10));
+		SimpleGUI::CheckBox(deadZone, U"DeadZone", Vec2(240, 10));
+		SimpleGUI::Slider(U"低周波", leftV, Vec2(240, 50));
+		SimpleGUI::Slider(U"高周波", rightV, Vec2(240, 90));
+	}
+}
+
+void PlaygroundForPadTest() {
+	Rand::InitializeWithTime();
+	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
+	PlaygroundForPad grd(s3d::RectF(0, 0, s3d::Window::Size()), winjAI3, nullptr, PlayerId::A);
+	while (s3d::System::Update()) {
+		grd.update();
 	}
 }
 
@@ -173,4 +283,6 @@ void Main()
 	//HumanPlay();
 	//BattleToWinjAI();
 	GachiMain();
+	//XInputTest();
+	//PlaygroundForPadTest();
 }

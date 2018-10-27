@@ -15,8 +15,8 @@ ActionImageView::ActionImageView() {
 ActionImageView::~ActionImageView() {
 }
 
-void ActionImageView::upd(Playground &playground) {
-	updActionImageView(playground);
+void ActionImageView::upd(const std::array<OptAction, 4> &actions) {
+	updActionImageView(actions);
 	draw();
 }
 
@@ -25,9 +25,9 @@ void ActionImageView::draw() {
 	actionImageOfAgent2.draw();
 }
 
-void ActionImageView::updActionImageView(Playground &playground) {
-	OptAction act1 = playground.getActions()[0];
-	OptAction act2 = playground.getActions()[1];
+void ActionImageView::updActionImageView(const std::array<OptAction, 4> &actions) {
+	OptAction act1 = actions[0];
+	OptAction act2 = actions[1];
 
 	//printf("%d %d\n", act1->dir, act2->dir);
 
