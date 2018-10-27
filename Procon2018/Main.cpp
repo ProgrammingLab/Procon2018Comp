@@ -146,7 +146,6 @@ void GachiMain() {
 	SP<AI> winjAI3((AI*)new WinjAI::WinjAI3());
 	Field field = rotField();
 	Playground grd(s3d::RectF(0, 0, s3d::Window::Size().x * 2 / 3, s3d::Window::Size().y), winjAI3, nullptr, field);
-	grd.setHiddenAI(true);
 	ActionImageView actView;
 	while (s3d::System::Update()) {
 		grd.update();

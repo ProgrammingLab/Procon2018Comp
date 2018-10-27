@@ -14,7 +14,12 @@ namespace Procon2018 {
 	Field QRReader::createField() {
 		read();
 		//organize("aaaa");
-		return Field(Rand::Next(60, 120 + 1), qrH, qrW, qrField, qrAgent);
+		Field ret(40, qrH, qrW, qrField, qrAgent);
+		ret.setColor(qrAgent[0], PlayerId::A);
+		ret.setColor(qrAgent[1], PlayerId::A);
+		ret.setColor(qrAgent[2], PlayerId::B);
+		ret.setColor(qrAgent[3], PlayerId::B);
+		return ret;
 	}
 
 	void QRReader::read() {
