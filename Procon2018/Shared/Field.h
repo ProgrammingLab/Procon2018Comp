@@ -111,6 +111,8 @@ public:
 
 	void setResTurn(int resTurn);
 
+	void swap();
+
 	const Grid& grid(const Point &pos) const;
 
 	void setColor(const Point &pos, const std::optional<PlayerId> &color);

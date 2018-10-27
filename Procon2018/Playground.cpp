@@ -34,8 +34,25 @@ Playground::Playground(const s3d::RectF & viewport, SP<AI> ai0, SP<AI> ai1, cons
 }
 
 void Playground::update() {
-	FieldView::update();
+	if (s3d::KeyBackspace.down() && m_old) {
+		bool possible = true;
+		for (int i = 0; i < 2; i++) {
+			if (m_ai[i] && !m_ai[i]->getNextMove()) possible = false;
+		}
+		if (possible) {
+			for (int i = 0; i < 2; i++) {
+				if (m_ai[i]) {
+					m_ai[i]->init(*m_old, (PlayerId)i);
+					m_ai[i]->forward({});
+				}
+			}
+			m_actions = {};
+			m_dragState = {};
+			goBack();
+		}
+	}
 
+	FieldView::update();
 
 	if (s3d::KeyC.down())isEditMode = !isEditMode;
 

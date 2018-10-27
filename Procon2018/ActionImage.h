@@ -30,6 +30,12 @@ private:
 	
 	AgentId agentId;
 
+	ActionType aType;
+
+	s3d::Stopwatch sw;
+	
+	double t;
+
 	void initTexture();
 
 	static std::optional<s3d::Array<s3d::Texture>> dirImage;

@@ -96,9 +96,15 @@ bool FieldView::forward(const std::optional<const Action>& a0,
 	for (int i = 0; i < 4; i++) {
 		m_oldPlayerPos[i] = m_fld.agentPos((AgentId)i);
 	}
+	Field backup = m_fld;
 	bool ret = m_fld.forward(a0, a1, b0, b1);
+	if (ret) m_old = backup;
 	m_sw.restart();
 	return ret;
+}
+
+void FieldView::goBack() {
+	if (m_old) transit(*m_old);
 }
 
 void FieldView::transit(const Field & next) {

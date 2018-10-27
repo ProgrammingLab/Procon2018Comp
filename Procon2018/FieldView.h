@@ -26,6 +26,8 @@ protected:
 
 	s3d::Stopwatch m_sw;
 
+	std::optional<Field> m_old;
+
 
 	s3d::Color gridColor(const Point &pos) const;
 
@@ -49,6 +51,8 @@ public:
 				 const std::optional<const Action> &a1,
 				 const std::optional<const Action> &b0,
 				 const std::optional<const Action> &b1);
+
+	void goBack();
 
 	void transit(const Field &next);
 

@@ -9,10 +9,12 @@ namespace Procon2018 {
 	std::optional<s3d::Array<s3d::Array<s3d::Texture>>> ActionImage::actionImages;
 
 	ActionImage::ActionImage() {
+		t = 0;
 		initTexture();
 	}
 
 	ActionImage::ActionImage(Point pos) {
+		t = 0;
 		initTexture();
 		cx = pos.x;
 		cy = pos.y;
@@ -61,12 +63,21 @@ namespace Procon2018 {
 	}
 
 	void ActionImage::draw() {
-		(*actionImages)[(int)agentId][actionImageId].resized(width, height).draw(cx, cy);
-		(*dirImage)[actionImageId].resized(width, height).draw(cx, cy + height);
+		t += sw.sF();
+		sw.restart();
+		if (t >= 0.5) t -= 0.5;
+		double w = 2*s3d::Math::Pi*t/0.5;
+		int k = (aType == ActionType::Remove ? 10 : 0);
+		int cx_ = cx + k*s3d::Math::Cos(w), cy_ = cy + k*s3d::Math::Sin(w);
+		(*actionImages)[(int)agentId][actionImageId].resized(width, height).draw(cx_, cy_);
+		(*dirImage)[actionImageId].resized(width, height).draw(cx_, cy_ + height);
 	}
 
 	void ActionImage::updActionImage(OptAction act) {
-		if (!act)actionImageId = (*actionImages)[(int)agentId].size() - 1;
+		if (!act) {
+			actionImageId = (*actionImages)[(int)agentId].size() - 1;
+			aType = act->type;
+		}
 		else actionImageId = act->dir;
 	}
 

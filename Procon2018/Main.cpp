@@ -133,6 +133,10 @@ Field rotField() {
 			_field.rot();
 			fv = createFV();
 		}
+		if (s3d::KeyS.down()) {
+			_field.swap();
+			fv = createFV();
+		}
 		if (s3d::KeyE.down()) {
 			break;
 		}

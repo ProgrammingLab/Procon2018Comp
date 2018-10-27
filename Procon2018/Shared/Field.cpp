@@ -202,6 +202,11 @@ void Field::setResTurn(int resTurn) {
 	m_resTurn = resTurn;
 }
 
+void Field::swap(){
+	std::swap(m_agent[0], m_agent[1]);
+	std::swap(m_agent[2], m_agent[3]);
+}
+
 const Grid& Field::grid(const Point &pos) const {
 	return m_field[pos.y][pos.x];
 }

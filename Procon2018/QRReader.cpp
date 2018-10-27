@@ -115,17 +115,13 @@ namespace Procon2018 {
 	}
 
 	void QRReader::setEnemyAgent() {
-		if (isVerticalSymmetry()) {
-			if (!(Point(qrAgent[0].x, qrH - 1 - qrAgent[0].y) == Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y))) {
-				qrAgent[2] = Point(qrAgent[0].x, qrH - 1 - qrAgent[0].y);
-				qrAgent[3] = Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y);
-			}
+		if (isVerticalSymmetry() && !(qrAgent[0] == Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y))) {
+			qrAgent[2] = Point(qrAgent[0].x, qrH - 1 - qrAgent[0].y);
+			qrAgent[3] = Point(qrAgent[1].x, qrH - 1 - qrAgent[1].y);
 		}
 		else {
-			if (!(Point(qrW - 1 - qrAgent[0].x, qrAgent[0].y) == Point(qrW - 1 - qrAgent[1].x, qrAgent[1].y))) {
-				qrAgent[2] = Point(qrW - 1 - qrAgent[0].x, qrAgent[0].y);
-				qrAgent[3] = Point(qrW - 1 - qrAgent[1].x, qrAgent[1].y);
-			}
+			qrAgent[2] = Point(qrW - 1 - qrAgent[0].x, qrAgent[0].y);
+			qrAgent[3] = Point(qrW - 1 - qrAgent[1].x, qrAgent[1].y);
 		}
 	}
 
