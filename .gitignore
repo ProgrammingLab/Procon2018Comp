@@ -327,3 +327,6 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/Intermediate/Procon2018/Release-x64/Procon2018(64-bit).exe
+/Intermediate/Procon2018/Release-x64/Procon2018(64-bit).lib
+/Procon2018/App/Procon2018(64-bit).exe

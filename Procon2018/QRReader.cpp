@@ -12,8 +12,8 @@ namespace Procon2018 {
 
 
 	Field QRReader::createField() {
-		//read();
-		organize("aaaa");
+		read();
+		//organize("aaaa");
 		return Field(Rand::Next(60, 120 + 1), qrH, qrW, qrField, qrAgent);
 	}
 
@@ -45,7 +45,7 @@ namespace Procon2018 {
 
 	void QRReader::organize(char *qrText) {
 
-		/*std::vector<std::string> organizedQrText;
+		std::vector<std::string> organizedQrText;
 		std::string tmp;
 
 
@@ -83,9 +83,9 @@ namespace Procon2018 {
 		qrAgent[0] = Point(stoi(organizedQrText[1]) - 1, stoi(organizedQrText[0]) - 1);
 		qrAgent[1] = Point(stoi(organizedQrText[3]) - 1, stoi(organizedQrText[2]) - 1);
 		organizedQrText.erase(organizedQrText.begin(), organizedQrText.end());
-		*/
 		
-		Field tmpField = Field::RandomState();
+		
+		/*Field tmpField = Field::RandomState();
 		qrH = tmpField.h();
 		qrW = tmpField.w();
 		for (int y = 0; y < tmpField.h(); ++y) {
@@ -102,7 +102,7 @@ namespace Procon2018 {
 
 
 		qrAgent[0] = tmpField.agentPos(AgentId(0));
-		qrAgent[1] = tmpField.agentPos(AgentId(1));
+		qrAgent[1] = tmpField.agentPos(AgentId(1));*/
 		
 		setEnemyAgent();
 		
