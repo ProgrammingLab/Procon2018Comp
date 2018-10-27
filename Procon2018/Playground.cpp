@@ -35,19 +35,20 @@ void Playground::update() {
 
 	bool forwards = s3d::KeyEnter.down();
 	bool validInput[4] = {};
+	std::optional<PlayerMove> aiMove[2];
 	for (int i = 0; i < 2; i++) {
 		if (m_ai[i] == nullptr) {
 			validInput[2*i] = validInput[2*i + 1] = true;
 			continue;
 		}
-		auto move = m_ai[i]->getNextMove();
-		if (!move) {
+		aiMove[i] = m_ai[i]->getNextMove();
+		if (!aiMove[i]) {
 			forwards = false;
 		}
-		m_actions[2*i] = move->a0;
-		m_actions[2*i + 1] = move->a1;
+		m_actions[2*i] = aiMove[i]->a0;
+		m_actions[2*i + 1] = aiMove[i]->a1;
 	}
-	if (m_ai[0] && m_ai[1] && m_ai[0]->getNextMove() && m_ai[1]->getNextMove()) forwards = true;
+	if (m_ai[0] && m_ai[1] && aiMove[0] && aiMove[1]) forwards = true;
 
 	auto toGridPos = [&](s3d::Vec2 vec) {
 		s3d::Vec2 pos = vec - m_v.tl();
